@@ -21,6 +21,8 @@ class EmoRecComDataset(Dataset):
             vision_transform=None,
             specific_slice=None
     ):
+        if isinstance(modality, int):
+            modality = DatasetModality(modality)
         """EmoRecCom pytorch dataset
 
         @param data_dir: Directory of the dataset.
@@ -60,7 +62,7 @@ class EmoRecComDataset(Dataset):
         return len(self.files)
 
     def pull_item(self, index):
-        img, img_info, labels, texts = [], [], [], []
+        img, img_info, labels, texts = [], [], [[], []], [[], []]
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Vision]:
             img, img_info = self.load_image(index)
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Text]:

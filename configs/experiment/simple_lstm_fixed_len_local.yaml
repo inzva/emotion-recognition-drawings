@@ -1,0 +1,46 @@
+# @package _global_
+
+# to execute this experiment run:
+# python run.py experiment=example_simple.yaml
+
+defaults:
+  - override /trainer: default.yaml
+  - override /model: simple_lstm_fixed_len_model.yaml
+  - override /datamodule: emoreccom_datamodule.yaml
+  - override /callbacks: default.yaml
+  - override /logger: tensorboard.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+seed: 12345
+
+trainer:
+  gpus: 1
+  min_epochs: 1
+  max_epochs: 100
+  gradient_clip_val: 0.5
+
+model:
+  vocab_size: 6900
+  embedding_dim: 128
+  hidden_dim: 128
+  num_classes: 8
+  dropout_rate: 0.2
+  lr: 0.001
+  weight_decay: 0.0005
+
+datamodule:
+  data_dir: /home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/ # /userfiles/comics_grp/multimodal_emotion_recognition_on_comics_scenes/
+  modality: 1
+  text_encoding_max_length: 120
+  batch_size: 64
+  train_val_test_split: [ 5112, 500, 500 ]
+  num_workers: 0
+  pin_memory: False
+
+callbacks:
+  model_checkpoint:
+    monitor: "val/auroc"
+  early_stopping:
+    monitor: "val/auroc"

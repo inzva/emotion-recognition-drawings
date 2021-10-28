@@ -1,6 +1,7 @@
 from typing import Any, List
-
+from functools import partial
 import torch
+import torchmetrics
 from pytorch_lightning import LightningModule
 from torchmetrics.classification.auroc import AUROC
 from torch.nn import functional as F
@@ -47,19 +48,23 @@ class SimpleLSTMFixedLenLitModel(LightningModule):
                                            num_classes,
                                            dropout_rate)
         self.criterion = torch.nn.BCEWithLogitsLoss()
-        self.train_accuracy = AUROC(pos_label=1, )
-        self.val_accuracy = AUROC(pos_label=1)
-        self.test_accuracy = AUROC(pos_label=1)
+        init_metric = partial(AUROC,
+                              pos_label=1,
+                              num_classes=self.hparams.num_classes,
+                              average='micro')
+        self.train_accuracy = init_metric()
+        self.val_accuracy = init_metric()
+        self.test_accuracy = init_metric()
 
     def forward(self, x: torch.Tensor):
         return self.model(x)
 
     def step(self, batch: Any):
-        x, y = batch
+        _, _, (y, polarities), x = batch
         scores = self.forward(x)
         loss = self.criterion(scores, y)
         preds = F.sigmoid(scores)
-        return loss, preds, y
+        return loss, preds, y.long()
 
     def training_step(self, batch: Any, batch_idx: int):
         loss, preds, targets = self.step(batch)
