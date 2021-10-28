@@ -7,3 +7,5 @@ num_classes: 8
 dropout_rate: 0.2
 lr: 0.001
 weight_decay: 0.0005
+use_glove_embeddings: False
+glove_file_path: /home/gsoykan20/Desktop/self_development/emotion-recognition-drawings/data/glove.6B.50d.txt

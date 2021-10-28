@@ -6,6 +6,7 @@ from pytorch_lightning import LightningModule
 from torchmetrics.classification.auroc import AUROC
 from torch.nn import functional as F
 from src.models.modules.simple_lstm_fixed_len_net import SimpleLSTMFixedLenNet
+from src.utils.text.text_preprocessor import TextPreprocessor
 
 """
 3.4 Evaluation metric
@@ -37,6 +38,8 @@ class SimpleLSTMFixedLenLitModel(LightningModule):
             hidden_dim: int = 128,
             num_classes: int = 8,
             dropout_rate: float = 0.2,
+            use_glove_embeddings: bool = False,
+            glove_file_path: str = None,
             lr: float = 0.001,
             weight_decay: float = 0.0005,
     ):
@@ -47,6 +50,11 @@ class SimpleLSTMFixedLenLitModel(LightningModule):
                                            hidden_dim,
                                            num_classes,
                                            dropout_rate)
+        if use_glove_embeddings:
+            text_preprocessor = TextPreprocessor(dataset=None)
+            text_preprocessor.create_vocabulary()
+            glove_embeddings = text_preprocessor.load_glove_embeddings(glove_file=glove_file_path)
+            self.model.replace_with_glove_embeddings(glove_embeddings)
         self.criterion = torch.nn.BCEWithLogitsLoss()
         init_metric = partial(AUROC,
                               pos_label=1,

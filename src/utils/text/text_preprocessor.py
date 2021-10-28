@@ -42,6 +42,8 @@ class TextPreprocessor:
         if exists(words_path) and exists(vocab2index_path):
             self.words = load_object(file_name=self.words_path)
             self.vocab2index = load_object(file_name=self.vocab2index_path)
+        elif dataset is None:
+            assert "dataset should be set if there is no vocab available to load"
 
     @staticmethod
     def tokenize(text):
@@ -116,6 +118,33 @@ class TextPreprocessor:
             save_object(self.words, self.words_path)
             save_object(self.vocab2index, self.vocab2index_path)
 
+    # Pretrained Glove word embeddings
+    # Download weights from : https://nlp.stanford.edu/projects/glove/
+    # or https://www.kaggle.com/watts2/glove6b50dtxt
+    def load_glove_embeddings(self, glove_file="./data/glove.6B.50d.txt"):
+        emb_size = 50
+        """Load the glove word vectors"""
+        word_vectors = {}
+        with open(glove_file) as f:
+            for line in f:
+                split = line.split()
+                word_vectors[split[0]] = np.array([float(x) for x in split[1:]])
+        """ Creates embedding matrix from word vectors"""
+        vocab_size = len(self.words)
+        W = np.zeros((vocab_size, emb_size), dtype="float32")
+        W[self.empty_token_position] = np.zeros(emb_size, dtype='float32')  # adding a vector for padding
+        W[self.unk_token_position] = np.random.uniform(-0.25, 0.25, emb_size)  # adding a vector for unknown words
+        for i in range(len(self.words)):
+            if i in [0, 1]:
+                continue
+            word = self.words[i]
+            if word in word_vectors:
+                W[i] = word_vectors[word]
+            else:
+                W[i] = np.random.uniform(-0.25, 0.25, emb_size)
+            self.vocab2index[word] = i
+        return W
+
 
 if __name__ == '__main__':
     emoreccom_path = "/home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/"  # "/userfiles/comics_grp/multimodal_emotion_recognition_on_comics_scenes/"
@@ -127,4 +156,5 @@ if __name__ == '__main__':
     sample_text = "wow !! i ' ve never liked fighting ray . but knock their bloomin ' blocks"
     encoded, encoded_length = text_preprocessor.encode_sentence(sample_text)
     decoded = text_preprocessor.decode_sentence(encoded=encoded)
+    glove_embeddings = text_preprocessor.load_glove_embeddings(glove_file="/home/gsoykan20/Desktop/self_development/emotion-recognition-drawings/data/glove.6B.50d.txt")
     print(encoded)
