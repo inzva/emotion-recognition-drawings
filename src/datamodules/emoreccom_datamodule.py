@@ -56,8 +56,10 @@ class EmoRecComDataModule(LightningDataModule):
                               text_transform=self.text_transform,
                               vision_transform=self.vision_transform)
             self.data_train = dataset(specific_slice=slice(0, self.train_val_test_split[0]))
-            self.data_val = dataset(specific_slice=slice(self.train_val_test_split[0], self.train_val_test_split[1]))
+            self.data_val = dataset(specific_slice=slice(self.train_val_test_split[0],
+                                                         self.train_val_test_split[0] + self.train_val_test_split[1]))
             self.data_test = dataset(specific_slice=slice(self.train_val_test_split[0] + self.train_val_test_split[1],
+                                                          self.train_val_test_split[0] + self.train_val_test_split[1] +
                                                           self.train_val_test_split[2]))
 
     def train_dataloader(self):
@@ -95,5 +97,5 @@ if __name__ == '__main__':
     datamodule.prepare_data()
     datamodule.setup()
     train_dataloader = iter(datamodule.train_dataloader())
-    batch = next(train_dataloader)
+    batch = next(train_dataloader)  # img, img_info, (hard labels, polarities), text encodings
     print(batch)
