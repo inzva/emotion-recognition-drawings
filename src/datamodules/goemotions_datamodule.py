@@ -18,10 +18,15 @@ class GoEmotionsDataModule(LightningDataModule):
                  pin_memory: bool = False
                  ):
         super().__init__()
-        self.tokenizer = transformers. \
-            SqueezeBertTokenizer. \
-            from_pretrained(tokenizer_name,
-                            do_lower_case=True)
+        if tokenizer_name == "squeezebert/squeezebert-uncased":
+            self.tokenizer = transformers. \
+                SqueezeBertTokenizer. \
+                from_pretrained(tokenizer_name,
+                                do_lower_case=True)
+        else:
+            raise Exception(
+                "Unknown tokenizer_name for GoEmotionsDataModule"
+            )
         self.tokenizer_max_len = tokenizer_max_len
         self.batch_size = batch_size
         self.num_workers = num_workers

@@ -11,7 +11,7 @@ defaults:
 
   - mode: default.yaml
 
-  - experiment: simple_lstm_fixed_len_local.yaml
+  - experiment: bert_goemotions_local.yaml
   - hparams_search: null
 
   # enable color logging
