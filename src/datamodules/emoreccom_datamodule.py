@@ -1,5 +1,7 @@
 from typing import Optional, Tuple
 from functools import partial
+
+import transformers
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
@@ -7,6 +9,7 @@ from torchvision.transforms import transforms
 from src.datamodules.datasets.dataset_modality import DatasetModality
 from src.datamodules.datasets.emoreccom import EmoRecComDataset
 from src.utils.text.text_preprocessor import TextPreprocessor
+from src.utils.text.text_utils import text_transform_for_tokenizer
 
 
 class EmoRecComDataModule(LightningDataModule):
@@ -14,6 +17,9 @@ class EmoRecComDataModule(LightningDataModule):
             self,
             data_dir: str = "data/",
             modality: DatasetModality = DatasetModality.VisionAndText,
+            use_tokenizer_instead_text_preprocessor: bool = True,
+            tokenizer_name: str = "squeezebert/squeezebert-uncased",
+            tokenizer_max_len: int = 100,
             # Train dataset length 6112
             train_val_test_split: Tuple[int, int, int] = (5112, 500, 500),
             text_encoding_max_length: int = 120,
@@ -22,6 +28,9 @@ class EmoRecComDataModule(LightningDataModule):
             pin_memory: bool = False
     ):
         super().__init__()
+        self.use_tokenizer_instead_text_preprocessor = use_tokenizer_instead_text_preprocessor
+        self.tokenizer_name = tokenizer_name
+        self.tokenizer_max_len = tokenizer_max_len
         self.data_dir = data_dir
         self.modality = modality
         self.train_val_test_split = train_val_test_split
@@ -35,18 +44,39 @@ class EmoRecComDataModule(LightningDataModule):
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
         self.data_test: Optional[Dataset] = None
+        self.text_transform = None
 
     @property
     def num_classes(self) -> int:
         return 8
 
     def prepare_data(self):
-        dataset = EmoRecComDataset(self.data_dir, train=True)
-        text_preprocessor = TextPreprocessor(dataset,
-                                             encoding_max_length=self.text_encoding_max_length)
-        text_preprocessor.create_vocabulary()
-        self.text_preprocessor = text_preprocessor
-        self.text_transform = text_preprocessor.text_transform
+        if self.use_tokenizer_instead_text_preprocessor:
+            if self.tokenizer_name == "squeezebert/squeezebert-uncased":
+                tokenizer = transformers. \
+                    SqueezeBertTokenizer. \
+                    from_pretrained(self.tokenizer_name,
+                                    do_lower_case=True)
+            else:
+                raise Exception(
+                    "Unknown tokenizer_name for GoEmotionsDataModule"
+                )
+
+            self.tokenizer_max_len = self.tokenizer_max_len
+            tokenizer_func = partial(tokenizer,
+                                     text_pair=None,
+                                     add_special_tokens=True,
+                                     max_length=self.tokenizer_max_len,
+                                     padding="max_length",
+                                     truncation=True,
+                                     )
+            self.text_transform = lambda texts: text_transform_for_tokenizer(tokenizer_func, texts)
+        else:
+            dataset = EmoRecComDataset(self.data_dir, train=True)
+            text_preprocessor = TextPreprocessor(dataset,
+                                                 encoding_max_length=self.text_encoding_max_length)
+            text_preprocessor.create_vocabulary()
+            self.text_transform = text_preprocessor.text_transform
 
     def setup(self, stage: Optional[str] = None):
         if not self.data_train or not self.data_val or not self.data_test:
@@ -91,9 +121,11 @@ class EmoRecComDataModule(LightningDataModule):
 
 
 if __name__ == '__main__':
+    use_transformer_tokenizer = True
     emoreccom_path = "/home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/"  # "/userfiles/comics_grp/multimodal_emotion_recognition_on_comics_scenes/"
     datamodule = EmoRecComDataModule(data_dir=emoreccom_path,
-                                     modality=DatasetModality.Text)
+                                     modality=DatasetModality.Text,
+                                     use_tokenizer_instead_text_preprocessor=use_transformer_tokenizer)
     datamodule.prepare_data()
     datamodule.setup()
     train_dataloader = iter(datamodule.train_dataloader())

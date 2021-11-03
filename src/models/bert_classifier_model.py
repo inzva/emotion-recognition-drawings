@@ -5,6 +5,7 @@ from pytorch_lightning import LightningModule
 from torch.nn import functional as F
 from transformers import AdamW, get_linear_schedule_with_warmup
 
+from src.datamodules.datasets.dataset_output import DatasetOutput
 from src.models.modules.bert_classifier import BertClassifier
 from src.utils.metric.micro_auc import compute_micro_auc
 
@@ -13,7 +14,8 @@ class BertClassifierLitModel(LightningModule):
     def __init__(
             self,
             num_classes: int,
-            num_train_steps: int,
+            num_train_steps: float,
+            dataset_output: int = 3,
             dropout_rate: float = 0.2,
             lr: float = 0.001,
             weight_decay: float = 0.0005,
@@ -21,6 +23,7 @@ class BertClassifierLitModel(LightningModule):
             bert_model_name: str = "squeezebert/squeezebert-uncased"):
         super().__init__()
         self.save_hyperparameters()
+        self.dataset_output = DatasetOutput(dataset_output)
         if bert_model_name == "squeezebert/squeezebert-uncased":
             bert_model = transformers.SqueezeBertModel.from_pretrained(bert_model_name)
         else:
@@ -35,9 +38,19 @@ class BertClassifierLitModel(LightningModule):
         return self.model(ids, mask)
 
     def step(self, batch: Any):
-        ids = batch["ids"]
-        mask = batch["mask"]
-        targets = batch["labels"]
+        if self.dataset_output is DatasetOutput.GoEmotionsOutput:
+            ids = batch["ids"]
+            mask = batch["mask"]
+            targets = batch["labels"]
+        elif self.dataset_output is DatasetOutput.EmoRecComTransformerTokenizedOutput:
+            transformer_inputs = batch[3]
+            ids = transformer_inputs["ids"]
+            mask = transformer_inputs["mask"]
+            targets, polarities = batch[2]
+        else:
+            raise Exception(
+                "Invalid dataset output for BertClassifierLitModel"
+            )
         scores = self.forward(ids, mask)
         loss = self.criterion(scores, targets.float())
         preds = F.sigmoid(scores)
@@ -92,7 +105,7 @@ class BertClassifierLitModel(LightningModule):
         # n_train_steps = int(len(train_dataset) / config.batch_size * num_epoch)
         scheduler = get_linear_schedule_with_warmup(optimizer,
                                                     num_warmup_steps=self.hparams.scheduler_num_warmup_steps,
-                                                    num_training_steps=self.hparams.num_train_steps)
+                                                    num_training_steps=int(self.hparams.num_train_steps))
         return {
             "optimizer": optimizer,
             "lr_scheduler": scheduler

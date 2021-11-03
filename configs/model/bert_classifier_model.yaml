@@ -8,3 +8,5 @@ lr: 0.001
 weight_decay: 0.0005
 scheduler_num_warmup_steps: 0
 bert_model_name: squeezebert/squeezebert-uncased
+# check DatasetOutput for further information
+dataset_output: 3
