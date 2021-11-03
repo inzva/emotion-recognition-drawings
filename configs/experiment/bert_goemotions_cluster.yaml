@@ -1,0 +1,45 @@
+# @package _global_
+
+# to execute this experiment run:
+# python run.py experiment=example_simple.yaml
+
+defaults:
+  - override /trainer: default.yaml
+  - override /model: bert_classifier_model.yaml
+  - override /datamodule: goemotions_datamodule.yaml
+  - override /callbacks: default.yaml
+  - override /logger: tensorboard.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+seed: 12345
+
+trainer:
+  gpus: 1
+  min_epochs: 1
+  max_epochs: 100
+  gradient_clip_val: 0.5
+
+model:
+  num_classes: 28
+  dropout_rate: 0.3
+  # n_train_steps = int(len(train_dataset) / config.batch_size * num_epoch)
+  num_train_steps: 67828 # (43410 / 64) * 100
+  lr: 0.00005
+  weight_decay: 0.001
+  scheduler_num_warmup_steps: 0
+  bert_model_name: squeezebert/squeezebert-uncased
+
+datamodule:
+  tokenizer_name: squeezebert/squeezebert-uncased
+  tokenizer_max_len: 40
+  batch_size: 256
+  num_workers: 0
+  pin_memory: False
+
+callbacks:
+  model_checkpoint:
+    monitor: "val/micro_auc"
+  early_stopping:
+    monitor: "val/micro_auc"
