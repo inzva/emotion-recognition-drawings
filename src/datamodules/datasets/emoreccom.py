@@ -1,6 +1,4 @@
 import os
-from collections import OrderedDict
-
 import cv2
 import json
 import numpy as np
@@ -11,7 +9,6 @@ from src.datamodules.datasets.dataset_modality import DatasetModality
 
 
 class EmoRecComDataset(Dataset):
-
     def __init__(
             self,
             data_dir=None,

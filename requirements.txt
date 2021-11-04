@@ -41,3 +41,5 @@ matplotlib~=3.4.3
 numpy~=1.19.5
 packaging~=21.0
 tqdm~=4.62.2
+datasets
+transformers

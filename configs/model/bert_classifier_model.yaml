@@ -1,0 +1,12 @@
+_target_: src.models.bert_classifier_model.BertClassifierLitModel
+
+num_classes: 28
+dropout_rate: 0.2
+# n_train_steps = int(len(train_dataset) / config.batch_size * num_epoch)
+num_train_steps: 67828 # (43410 / 64) * 100
+lr: 0.001
+weight_decay: 0.0005
+scheduler_num_warmup_steps: 0
+bert_model_name: squeezebert/squeezebert-uncased
+# check DatasetOutput for further information
+dataset_output: 3

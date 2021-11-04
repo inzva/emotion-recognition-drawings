@@ -1,0 +1,7 @@
+_target_: src.datamodules.goemotions_datamodule.GoEmotionsDataModule
+
+tokenizer_name: squeezebert/squeezebert-uncased
+tokenizer_max_len: 40
+batch_size: 64
+num_workers: 0
+pin_memory: False
