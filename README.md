@@ -3,6 +3,21 @@
 # emotion-recognition-drawings
 Multi-modal Emotion Recognition on Drawings Project - inzva AI Projects #7
 
+
+# Emotic Dataset 
+## Usage 
+
+Download the [Emotic dataset](https://drive.google.com/open?id=0B7sjGeF4f3FYQUVlZ3ZOai1ieEU) and [annotations](https://1drv.ms/u/s!AkYHbdGNmIVCgbYJxp1EtUplH6BhSw?e=VUP26u) and prepare the directory following the below structure: 
+```
+├── ...
+│   ├── emotic
+│   |    ├── ade20k
+│   |    ├── emodb_small
+│   |    ├── framesdb
+│   |    ├── mscoco 
+│   ├── Annotations
+│   |    ├── Annotations.mat
+```
 # Lightning-Hydra-Template
 
 
