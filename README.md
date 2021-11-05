@@ -10,7 +10,7 @@ Multi-modal Emotion Recognition on Drawings Project - inzva AI Projects #7
 Pretrained Models and threshold for inference can be found at : 
 https://drive.google.com/drive/folders/1e-JLA7V73CQD5pjTFCSWnKCmB0gCpV1D
 
-```
+
 ├── ...
 │   ├── emotic
 │   |    ├── ade20k
@@ -19,7 +19,8 @@ https://drive.google.com/drive/folders/1e-JLA7V73CQD5pjTFCSWnKCmB0gCpV1D
 │   |    ├── mscoco 
 │   ├── Annotations
 │   |    ├── Annotations.mat
-```
+
+
 # Lightning-Hydra-Template
 
 
