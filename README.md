@@ -7,7 +7,9 @@ Multi-modal Emotion Recognition on Drawings Project - inzva AI Projects #7
 # Emotic Dataset 
 ## Usage 
 
-Download the [Emotic dataset](https://drive.google.com/open?id=0B7sjGeF4f3FYQUVlZ3ZOai1ieEU) and [annotations](https://1drv.ms/u/s!AkYHbdGNmIVCgbYJxp1EtUplH6BhSw?e=VUP26u) and prepare the directory following the below structure: 
+Pretrained Models and threshold for inference can be found at : 
+https://drive.google.com/drive/folders/1e-JLA7V73CQD5pjTFCSWnKCmB0gCpV1D
+
 ```
 ├── ...
 │   ├── emotic
