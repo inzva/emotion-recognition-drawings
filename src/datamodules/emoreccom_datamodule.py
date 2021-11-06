@@ -52,16 +52,7 @@ class EmoRecComDataModule(LightningDataModule):
 
     def prepare_data(self):
         if self.use_tokenizer_instead_text_preprocessor:
-            if self.tokenizer_name == "squeezebert/squeezebert-uncased":
-                tokenizer = transformers. \
-                    SqueezeBertTokenizer. \
-                    from_pretrained(self.tokenizer_name,
-                                    do_lower_case=True)
-            else:
-                raise Exception(
-                    "Unknown tokenizer_name for GoEmotionsDataModule"
-                )
-
+            tokenizer = self.get_tokenizer()
             self.tokenizer_max_len = self.tokenizer_max_len
             tokenizer_func = partial(tokenizer,
                                      text_pair=None,
@@ -77,6 +68,18 @@ class EmoRecComDataModule(LightningDataModule):
                                                  encoding_max_length=self.text_encoding_max_length)
             text_preprocessor.create_vocabulary()
             self.text_transform = text_preprocessor.text_transform
+
+    def get_tokenizer(self):
+        if self.tokenizer_name == "squeezebert/squeezebert-uncased":
+            tokenizer = transformers. \
+                SqueezeBertTokenizer. \
+                from_pretrained(self.tokenizer_name,
+                                do_lower_case=True)
+        else:
+            raise Exception(
+                "Unknown tokenizer_name for GoEmotionsDataModule"
+            )
+        return tokenizer
 
     def setup(self, stage: Optional[str] = None):
         if not self.data_train or not self.data_val or not self.data_test:
