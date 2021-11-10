@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from sklearn import metrics
 
@@ -19,9 +20,11 @@ def compute_micro_auc(preds, labels):
     @return:
     """
     # preds = torch.stack(preds)
-    preds = preds.cpu().detach().numpy()
+    if not isinstance(preds, np.ndarray):
+        preds = preds.cpu().detach().numpy()
     # labels = torch.stack(labels)
-    labels = labels.cpu().detach().numpy()
+    if not isinstance(labels, np.ndarray):
+        labels = labels.cpu().detach().numpy()
 
     '''
     ##Method 1 by taking transpose and picking each column for averaging
