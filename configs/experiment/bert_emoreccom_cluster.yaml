@@ -33,7 +33,7 @@ model:
   bert_model_name: squeezebert/squeezebert-uncased
 
 datamodule:
-  data_dir: /home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/ # /userfiles/comics_grp/datasets/EmoRecCom/
+  data_dir: /userfiles/comics_grp/datasets/EmoRecCom/
   modality: 1
   text_encoding_max_length: 120
   batch_size: 32
