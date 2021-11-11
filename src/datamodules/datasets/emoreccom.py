@@ -2,9 +2,8 @@ import os
 import cv2
 import json
 import numpy as np
-
 from torch.utils.data import Dataset
-
+from typing import Optional, Set
 from src.datamodules.datasets.dataset_modality import DatasetModality
 
 
@@ -16,10 +15,12 @@ class EmoRecComDataset(Dataset):
             modality: DatasetModality = DatasetModality.VisionAndText,
             text_transform=None,
             vision_transform=None,
+            label_transform=None,
             specific_slice=None
     ):
         if isinstance(modality, int):
             modality = DatasetModality(modality)
+        # Fixing label transform options to enum if they are int's.
         """EmoRecCom pytorch dataset
 
         @param data_dir: Directory of the dataset.
@@ -40,6 +41,7 @@ class EmoRecComDataset(Dataset):
         self.specific_slice = specific_slice
         self.text_transform = text_transform
         self.vision_transform = vision_transform
+        self.label_transform = label_transform
         self.emotion_dict = {
             "angry": 0,
             "disgust": 1,
@@ -77,6 +79,8 @@ class EmoRecComDataset(Dataset):
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Text] \
                 and self.text_transform is not None:
             texts = self.text_transform(texts)
+        if self.label_transform is not None:
+            labels = self.label_transform(labels)
         return img, img_info, labels, texts
 
     def load_anno(self, index):

@@ -43,6 +43,7 @@ datamodule:
   use_tokenizer_instead_text_preprocessor: True
   tokenizer_name: squeezebert/squeezebert-uncased
   tokenizer_max_len: 80
+  use_label_transform: True
 
 callbacks:
   model_checkpoint:
