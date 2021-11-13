@@ -27,7 +27,8 @@ model:
   dropout_rate: 0.2
   # n_train_steps = int(len(train_dataset) / config.batch_size * num_epoch)
   num_train_steps: 15975 # 5112 / 32 * 100
-  lr: 0.001
+  use_scheduler: True
+  lr: 0.00003
   weight_decay: 0.0005
   scheduler_num_warmup_steps: 0
   bert_model_name: squeezebert/squeezebert-uncased
