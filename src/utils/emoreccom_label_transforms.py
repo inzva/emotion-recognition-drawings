@@ -1,9 +1,9 @@
 import numpy as np
 
-# TODO: @gsoykan rename this
-def normalize_and_take_top_two(emoreccom_labels,
-                               polarity_threshold: float = 0.2,
-                               take_top_n: int = 1):
+
+def normalize_and_take_top_n(emoreccom_labels,
+                             polarity_threshold: float = 0.2,
+                             take_top_n: int = 1):
     labels, polarity = emoreccom_labels
     # normalize
     polarity = np.divide(polarity, np.sum(polarity))
@@ -17,4 +17,3 @@ def normalize_and_take_top_two(emoreccom_labels,
         top_index_mask[top_index] = 1
     labels *= top_index_mask
     return labels, polarity
-

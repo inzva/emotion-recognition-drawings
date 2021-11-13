@@ -8,7 +8,7 @@ from torchvision.transforms import transforms
 
 from src.datamodules.datasets.dataset_modality import DatasetModality
 from src.datamodules.datasets.emoreccom import EmoRecComDataset
-from src.utils.emoreccom_label_transforms import normalize_and_take_top_two
+from src.utils.emoreccom_label_transforms import normalize_and_take_top_n
 from src.utils.text.text_preprocessor import TextPreprocessor
 from src.utils.text.text_utils import text_transform_for_tokenizer
 
@@ -55,7 +55,7 @@ class EmoRecComDataModule(LightningDataModule):
         return 8
 
     def prepare_data(self):
-        self.label_transform = normalize_and_take_top_two if self.use_label_transform else None
+        self.label_transform = normalize_and_take_top_n if self.use_label_transform else None
         if self.use_tokenizer_instead_text_preprocessor:
             tokenizer = self.get_tokenizer()
             self.tokenizer_max_len = self.tokenizer_max_len
