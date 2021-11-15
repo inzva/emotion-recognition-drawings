@@ -4,7 +4,7 @@ import transformers
 from pytorch_lightning import LightningModule
 from torch.nn import functional as F
 from transformers import AdamW, get_linear_schedule_with_warmup
-
+from typing import Optional
 from src.datamodules.datasets.dataset_output import DatasetOutput
 from src.models.modules.bert_classifier import BertClassifier
 from src.utils.metric.micro_auc import compute_micro_auc
@@ -21,11 +21,17 @@ class BertClassifierLitModel(LightningModule):
             weight_decay: float = 0.0005,
             use_scheduler: bool = True,
             scheduler_num_warmup_steps: int = 0,
+            # This will only be used to get inner BERT model,
+            # the final linear layer will be instantiated from scratch
+            pretrained_lit_model_for_body_checkpoint: Optional[str] = None,
             bert_model_name: str = "squeezebert/squeezebert-uncased"):
         super().__init__()
         self.save_hyperparameters()
         self.dataset_output = DatasetOutput(dataset_output)
-        if bert_model_name == "squeezebert/squeezebert-uncased":
+        if pretrained_lit_model_for_body_checkpoint is not None:
+            pretrained_lit_model = BertClassifierLitModel.load_from_checkpoint(pretrained_lit_model_for_body_checkpoint)
+            bert_model = pretrained_lit_model.model.bert
+        elif bert_model_name == "squeezebert/squeezebert-uncased":
             bert_model = transformers.SqueezeBertModel.from_pretrained(bert_model_name)
         else:
             raise Exception(

@@ -31,6 +31,7 @@ model:
   weight_decay: 0.0005
   scheduler_num_warmup_steps: 0
   bert_model_name: squeezebert/squeezebert-uncased
+  pretrained_lit_model_for_body_checkpoint: /home/gsoykan20/Desktop/self_development/emotion-recognition-drawings/logs/custom_runs/bert_model_goemotions_epoch_008.ckpt
 
 datamodule:
   data_dir: /home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/ # /userfiles/comics_grp/datasets/EmoRecCom/
