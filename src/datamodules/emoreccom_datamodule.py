@@ -25,6 +25,7 @@ class EmoRecComDataModule(LightningDataModule):
             # Train dataset length 6112
             train_val_test_split: Tuple[int, int, int] = (5112, 500, 500),
             text_encoding_max_length: int = 120,
+            use_private_test_set: bool = False,
             batch_size: int = 64,
             num_workers: int = 0,
             pin_memory: bool = False
@@ -35,6 +36,7 @@ class EmoRecComDataModule(LightningDataModule):
         self.tokenizer_max_len = tokenizer_max_len
         self.data_dir = data_dir
         self.modality = modality
+        self.use_private_test_set = use_private_test_set
         self.train_val_test_split = train_val_test_split
         self.text_encoding_max_length = text_encoding_max_length
         self.batch_size = batch_size
@@ -88,8 +90,9 @@ class EmoRecComDataModule(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         if not self.data_train or not self.data_val or not self.data_test:
-            dataset = partial(EmoRecComDataset, self.data_dir,
-                              train=True,
+            dataset = partial(EmoRecComDataset,
+                              self.data_dir,
+                              train=not self.use_private_test_set,
                               modality=self.modality,
                               text_transform=self.text_transform,
                               vision_transform=self.vision_transform,
