@@ -39,7 +39,8 @@ class EmoRecComDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.vision_transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,)),
+            transforms.Resize((300,300))]
         )
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
