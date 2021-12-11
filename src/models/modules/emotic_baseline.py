@@ -4,15 +4,18 @@ import torch
 
 class FuseNetwork(nn.Module):
     """ Emotic Fuse Network Model"""
-    def __init__(self, num_context_features, num_body_features):
+    def __init__(self, num_context_features, num_body_features, num_emotion_classes=26, num_cont_class=3):
         super().__init__()
         self.num_context_features = num_context_features
         self.num_body_features = num_body_features
         self.fc1 = nn.Linear((self.num_context_features + num_body_features), 256)
         self.bn1 = nn.BatchNorm1d(256)
         self.d1 = nn.Dropout(p=0.5)
-        self.fc_cat = nn.Linear(256, 26) # Emotion
-        self.fc_cont = nn.Linear(256, 3) # Continious Valence, Dominance 
+        self.fc_cat = nn.Linear(256, num_emotion_classes) # Emotion
+        self.num_cont_class = num_cont_class
+
+        if self.num_cont_class != -1:
+          self.fc_cont = nn.Linear(256, self.num_cont_class) # Continious Valence, Dominance 
         self.relu = nn.ReLU()
 
     def forward(self, x_context, x_body):
@@ -24,8 +27,12 @@ class FuseNetwork(nn.Module):
         fuse_out = self.relu(fuse_out)
         fuse_out = self.d1(fuse_out)    
         cat_out = self.fc_cat(fuse_out)
-        cont_out = self.fc_cont(fuse_out)
-        return cat_out, cont_out
+        if self.num_cont_class == -1:
+          return cat_out
+        else:
+          cont_out = self.fc_cont(fuse_out)
+          return cat_out, cont_out
+          
 
 # @TODO get rid of Emotic class 
 ### While loading pretrained weights for inference I could not load the weights with new
@@ -59,10 +66,11 @@ class Emotic(nn.Module):
 
 class DiscreteLoss(nn.Module):
   ''' Class to measure loss between categorical emotion predictions and labels.'''
-  def __init__(self, weight_type='mean', device=torch.device('cpu')):
+  def __init__(self, weight_type='mean', device=torch.device('cuda'), num_classes=26):
     super().__init__()
     self.weight_type = weight_type
     self.device = device
+    self.num_classes = num_classes
     if self.weight_type == 'mean':
       self.weights = torch.ones((1,26))/26.0
       self.weights = self.weights.to(self.device)
@@ -81,7 +89,7 @@ class DiscreteLoss(nn.Module):
 
   def prepare_dynamic_weights(self, target):
     target_stats = torch.sum(target, dim=0).float().unsqueeze(dim=0).cpu()
-    weights = torch.zeros((1,26))
+    weights = torch.zeros((1,self.num_classes))
     weights[target_stats != 0 ] = 1.0/torch.log(target_stats[target_stats != 0].data + 1.2)
     weights[target_stats == 0] = 0.0001
     return weights
