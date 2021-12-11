@@ -1,0 +1,30 @@
+# @package _global_
+
+# to execute this experiment run:
+# python run.py experiment=emotic_baseline_local.yaml
+
+defaults:
+  - override /trainer: default.yaml
+  - override /model: emotic_baseline_model.yaml
+  - override /datamodule: emotic_datamodule.yaml
+  - override /callbacks: default.yaml
+  - override /logger: tensorboard.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+seed: 12345
+
+trainer:
+  gpus: 1
+  min_epochs: 1
+  max_epochs: 3
+  gradient_clip_val: 0.5
+  
+
+callbacks:
+  model_checkpoint:
+    monitor: "val/loss"
+  early_stopping:
+    monitor: "val/loss"
+

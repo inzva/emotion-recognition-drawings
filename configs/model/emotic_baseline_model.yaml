@@ -1,0 +1,14 @@
+_target_: src.models.emotic_baseline_model.EmoticBaselineModel
+
+num_emotion_classes: 26
+num_cont_classes: 3
+pretrained_model_path: "/home/ckoksal20/Documents/emotion-recognition-drawings/pretrained_weights"
+cat_loss_param: 0.5
+arch: "resnet18"
+model_context_num_classes: 365
+lr: 0.001
+weight_decay: 0.0005
+scheduler_step_size: 7
+scheduler_gamma: 0.1
+discrete_loss: True
+continuous_loss: True
