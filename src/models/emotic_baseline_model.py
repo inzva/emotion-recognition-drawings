@@ -6,7 +6,7 @@ import os
 from PIL import Image
 import scipy.io
 from sklearn.metrics import average_precision_score, precision_recall_curve
-
+from typing import Any, List
 import torch 
 import torch.nn as nn 
 import torch.nn.functional as F
@@ -30,21 +30,37 @@ class EmoticBaselineModel(LightningModule):
         pretrained_model_path:str,
         cat_loss_param=0.5,
         cont_loss_param=0.5,
+        model_context_num_classes=365,
         arch:str ="resnet18",
+        lr = 0.001,
+        weight_decay = 5e-4,
+        scheduler_step_size= 7,
+        scheduler_gamma = 0.1,
+        
+        discrete_loss=True,
+        continuous_loss = True
+
 
         ):
         super().__init__()
-        
-        self.num_emotion_classes = num_emotion_classes,
+        self.save_hyperparameters()
+        self.num_emotion_classes = num_emotion_classes
         self.num_cont_classes =num_cont_classes
         self.arch = arch
         self.pretrained_model_path = pretrained_model_path
 
-        self.model_context = models_torch.__dict__[arch](num_classes=365)
+        self.model_context = models_torch.__dict__[arch](num_classes=model_context_num_classes)
         self.places_model_dir = os.path.join(pretrained_model_path,"places")
 
         self.cat_loss_param = cat_loss_param
         self.cont_loss_param = cont_loss_param
+
+        self.lr = lr
+        self.weight_decay = weight_decay
+        self.scheduler_step_size = scheduler_step_size
+        self.scheduler_gamma= scheduler_gamma
+        self.continuous = continuous_loss
+        self.discrete = discrete_loss
         
         if not os.path.exists(pretrained_model_path):
             os.makedirs(pretrained_model_path)
@@ -57,20 +73,16 @@ class EmoticBaselineModel(LightningModule):
             os.makedirs(self.places_model_dir)
             
             model_url = "http://places2.csail.mit.edu/models_places365/resnet18_places365.pth.tar"
-            
-            
             model_out_path =os.path.join(self.places_model_dir,"resnet18_places365.pth.tar")
             (filename, headers) = urllib.request.urlretrieve(
             model_url,
             filename = model_out_path)
             
-            
+            print("Model out path : ",model_out_path)
             checkpoint = torch.load(model_out_path, map_location=lambda storage, loc: storage) # model trained in GPU could be deployed in CPU machine like this!
             state_dict = {str.replace(k,'module.',''): v for k,v in checkpoint['state_dict'].items()} # the data parallel layer will add 'module' before each layer name
             self.model_context.load_state_dict(state_dict)
-            self.model_context.eval()
-
-            self.model_context.cpu()
+            
             torch.save(self.model_context.state_dict(), os.path.join(self.places_model_dir,'resnet18_state_dict.pth'))
             print("Downloaded file : ",filename)
             
@@ -83,9 +95,13 @@ class EmoticBaselineModel(LightningModule):
         self.model_body = models_torch.resnet18(pretrained=True)
         
 
-        self.fuse_network = FuseNetwork(list(self.model_context.children())[-1].in_features, list(self.model_body.children())[-1].in_features)
+        self.fuse_network = FuseNetwork(list(self.model_context.children())[-1].in_features, list(self.model_body.children())[-1].in_features, \
+             num_emotion_classes=self.num_emotion_classes, num_cont_class=self.num_cont_classes)
         self.model_context = nn.Sequential(*(list(self.model_context.children())[:-1]))
         self.model_body = nn.Sequential(*(list(self.model_body.children())[:-1]))
+
+
+
 
 
         # Train only Fuse Network - Body and Context networks are freezed
@@ -96,9 +112,15 @@ class EmoticBaselineModel(LightningModule):
         for param in self.model_body.parameters():
             param.requires_grad = False
 
+        if self.discrete  and self.continuous:
 
-        self.disc_loss = DiscreteLoss('dynamic', torch.device('cpu'))
-        self.cont_loss = ContinuousLoss_SL1()
+            self.disc_loss = DiscreteLoss('dynamic', torch.device('cuda'))
+            self.cont_loss = ContinuousLoss_SL1()
+        elif self.dicrete and not self.continuous:
+            self.disc_loss = DiscreteLoss('dynamic', torch.device('cuda'))
+
+
+    
         
 
 
@@ -118,8 +140,11 @@ class EmoticBaselineModel(LightningModule):
         pred_cat, pred_cont = self.forward(batch)
 
         cat_loss_batch = self.disc_loss(pred_cat, labels_cat)
-        cont_loss_batch = self.cont_loss(pred_cont * 10, labels_cont * 10)
-        loss = (self.cat_loss_param * cat_loss_batch) + (self.cont_loss_param * cont_loss_batch)
+        if self.continuous:
+            cont_loss_batch = self.cont_loss(pred_cont * 10, labels_cont * 10)
+            loss = (self.cat_loss_param * cat_loss_batch) + (self.cont_loss_param * cont_loss_batch)
+        else:
+            loss = (self.cat_loss_param * cat_loss_batch)
 
         return loss, pred_cat, pred_cont, labels_cat, labels_cont
 
@@ -136,7 +161,6 @@ class EmoticBaselineModel(LightningModule):
 
     def test_step(self, batch: Any, batch_idx: int):
         loss, pred_cat, pred_cont, labels_cat, labels_cont = self.step(batch)
-        
         self.log("test/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
         return {"loss": loss, "preds": (pred_cat, pred_cont), "targets": (labels_cat, labels_cont)}
     
@@ -144,8 +168,8 @@ class EmoticBaselineModel(LightningModule):
     def configure_optimizers(self):
         param_optimizer = list(self.named_parameters())
         opt = optim.Adam((list(self.fuse_network.parameters()) + list(self.model_context.parameters()) + \
-                  list(self.model_body.parameters())), lr=0.001, weight_decay=5e-4)
-        scheduler = StepLR(opt, step_size=7, gamma=0.1)
+                  list(self.model_body.parameters())), lr=self.lr, weight_decay=self.weight_decay)
+        scheduler = StepLR(opt, step_size=self.scheduler_step_size, gamma=self.scheduler_gamma)
         return {
             "optimizer": opt,
             "lr_scheduler": scheduler
