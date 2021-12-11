@@ -32,6 +32,7 @@ model:
   weight_decay: 0.0005
   scheduler_num_warmup_steps: 0
   bert_model_name: squeezebert/squeezebert-uncased
+  pretrained_lit_model_for_body_checkpoint: /scratch/users/gsoykan20/projects/emotion-recognition-drawings/logs/runs/2021-11-03/16-38-17/checkpoints/epoch_008.ckpt
 
 datamodule:
   data_dir: /userfiles/comics_grp/datasets/EmoRecCom/
