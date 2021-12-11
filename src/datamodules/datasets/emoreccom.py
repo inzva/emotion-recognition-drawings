@@ -16,7 +16,8 @@ class EmoRecComDataset(Dataset):
             modality: DatasetModality = DatasetModality.VisionAndText,
             text_transform=None,
             vision_transform=None,
-            specific_slice=None
+            specific_slice=None,
+            person_bb = False
     ):
         if isinstance(modality, int):
             modality = DatasetModality(modality)
@@ -55,10 +56,12 @@ class EmoRecComDataset(Dataset):
         if specific_slice is not None:
             self.files = self.files[specific_slice]
 
+        self.person_bb = person_bb
+        if self.person_bb:
+            self.bbx_anns =  json.load(
+                open('/home/ckoksal20/Documents/emotion-recognition-drawings/selected_bbox.json',
+                'r'))
         
-        self.bbx_anns =  json.load(
-            open('/home/ckoksal20/Documents/emotion-recognition-drawings/selected_bbox.json',
-             'r'))
 
     def __len__(self):
         return len(self.files)
@@ -68,8 +71,12 @@ class EmoRecComDataset(Dataset):
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Vision]:
             img, img_info = self.load_image(index)
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Text]:
-            labels, texts, selected_bb = self.load_anno(index)
-        return img, img_info, labels, texts, selected_bb
+            if self.person_bb:
+                labels, texts, selected_bb = self.load_anno(index)
+                return img, img_info, labels, texts, selected_bb
+            else:
+                return img, img_info, labels, texts
+
 
     def __getitem__(self, index):
         img, img_info, labels, texts, selected_bb = self.pull_item(index)
@@ -78,25 +85,27 @@ class EmoRecComDataset(Dataset):
         # -----------------------------------------------------------------
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Vision] \
                 and self.vision_transform is not None:
-
-
-            xmin,ymin,width, height = selected_bb
-            xmin,ymin,width, height = int(xmin), int(ymin) ,int(width), int(height)
-            cropped_image = img[ymin :ymin+height, xmin:xmin+width]
-
-            img = self.vision_transform(img)
-            cropped_image = self.vision_transform(cropped_image)
-            #img, img_info = self.vision_transform(img, img_info)
-
-
-
             
+            if self.person_bb:
+                # Extract Bounding Box - Person BB
+                xmin,ymin,width, height = selected_bb
+                xmin,ymin,width, height = int(xmin), int(ymin) ,int(width), int(height)
+                cropped_image = img[ymin :ymin+height, xmin:xmin+width]
+                # Transform Cropped BB
+                cropped_image = self.vision_transform(cropped_image)
+                
 
+            #img, img_info = self.vision_transform(img, img_info) 
+            img = self.vision_transform(img)
 
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Text] \
                 and self.text_transform is not None:
             texts = self.text_transform(texts)
-        return img, img_info, labels, texts, cropped_image
+
+        if self.person_bb:
+            return img, img_info, labels, texts, cropped_image
+        else:
+            return img, img_info, labels, texts
 
     def load_anno(self, index):
         # given an index, it loads the annotations of the file at that index
@@ -108,9 +117,13 @@ class EmoRecComDataset(Dataset):
         narrative = annots["narrative"]
         dialog = annots["dialog"]
 
-        selected_bb =  self.bbx_anns[file]
+        if self.person_bb:
+            selected_bb =  self.bbx_anns[file]
+            return [label, polarity], [narrative, dialog], selected_bb
+        else:
+            return [label, polarity], [narrative, dialog]
 
-        return [label, polarity], [narrative, dialog], selected_bb
+        
 
     def load_image(self, index):
         img_path = os.path.join(self.annotations["root_dir"], self.files[index])
