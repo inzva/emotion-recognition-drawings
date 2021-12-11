@@ -8,6 +8,7 @@ from torchvision.transforms import transforms
 
 from src.datamodules.datasets.dataset_modality import DatasetModality
 from src.datamodules.datasets.emoreccom import EmoRecComDataset
+from src.utils.emoreccom_label_transforms import normalize_and_take_top_n
 from src.utils.text.text_preprocessor import TextPreprocessor
 from src.utils.text.text_utils import text_transform_for_tokenizer
 
@@ -20,9 +21,11 @@ class EmoRecComDataModule(LightningDataModule):
             use_tokenizer_instead_text_preprocessor: bool = True,
             tokenizer_name: str = "squeezebert/squeezebert-uncased",
             tokenizer_max_len: int = 100,
+            use_label_transform: bool = False,
             # Train dataset length 6112
             train_val_test_split: Tuple[int, int, int] = (5112, 500, 500),
             text_encoding_max_length: int = 120,
+            use_private_test_set: bool = False,
             batch_size: int = 64,
             num_workers: int = 0,
             pin_memory: bool = False
@@ -33,11 +36,13 @@ class EmoRecComDataModule(LightningDataModule):
         self.tokenizer_max_len = tokenizer_max_len
         self.data_dir = data_dir
         self.modality = modality
+        self.use_private_test_set = use_private_test_set
         self.train_val_test_split = train_val_test_split
         self.text_encoding_max_length = text_encoding_max_length
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
+        self.use_label_transform = use_label_transform
         self.vision_transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,)),
             transforms.Resize((300,300))]
@@ -46,23 +51,16 @@ class EmoRecComDataModule(LightningDataModule):
         self.data_val: Optional[Dataset] = None
         self.data_test: Optional[Dataset] = None
         self.text_transform = None
+        self.label_transform = None
 
     @property
     def num_classes(self) -> int:
         return 8
 
     def prepare_data(self):
+        self.label_transform = normalize_and_take_top_n if self.use_label_transform else None
         if self.use_tokenizer_instead_text_preprocessor:
-            if self.tokenizer_name == "squeezebert/squeezebert-uncased":
-                tokenizer = transformers. \
-                    SqueezeBertTokenizer. \
-                    from_pretrained(self.tokenizer_name,
-                                    do_lower_case=True)
-            else:
-                raise Exception(
-                    "Unknown tokenizer_name for GoEmotionsDataModule"
-                )
-
+            tokenizer = self.get_tokenizer()
             self.tokenizer_max_len = self.tokenizer_max_len
             tokenizer_func = partial(tokenizer,
                                      text_pair=None,
@@ -79,13 +77,27 @@ class EmoRecComDataModule(LightningDataModule):
             text_preprocessor.create_vocabulary()
             self.text_transform = text_preprocessor.text_transform
 
+    def get_tokenizer(self):
+        if self.tokenizer_name == "squeezebert/squeezebert-uncased":
+            tokenizer = transformers. \
+                SqueezeBertTokenizer. \
+                from_pretrained(self.tokenizer_name,
+                                do_lower_case=True)
+        else:
+            raise Exception(
+                "Unknown tokenizer_name for GoEmotionsDataModule"
+            )
+        return tokenizer
+
     def setup(self, stage: Optional[str] = None):
         if not self.data_train or not self.data_val or not self.data_test:
-            dataset = partial(EmoRecComDataset, self.data_dir,
-                              train=True,
+            dataset = partial(EmoRecComDataset,
+                              self.data_dir,
+                              train=not self.use_private_test_set,
                               modality=self.modality,
                               text_transform=self.text_transform,
-                              vision_transform=self.vision_transform)
+                              vision_transform=self.vision_transform,
+                              label_transform=self.label_transform)
             self.data_train = dataset(specific_slice=slice(0, self.train_val_test_split[0]))
             self.data_val = dataset(specific_slice=slice(self.train_val_test_split[0],
                                                          self.train_val_test_split[0] + self.train_val_test_split[1]))

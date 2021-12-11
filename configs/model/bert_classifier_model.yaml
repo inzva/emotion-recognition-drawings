@@ -10,3 +10,4 @@ scheduler_num_warmup_steps: 0
 bert_model_name: squeezebert/squeezebert-uncased
 # check DatasetOutput for further information
 dataset_output: 3
+pretrained_lit_model_for_body_checkpoint: null
