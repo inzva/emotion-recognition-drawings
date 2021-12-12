@@ -6,6 +6,7 @@ from pytorch_lightning import LightningModule
 from torchmetrics.classification.auroc import AUROC
 from torch.nn import functional as F
 from src.models.modules.simple_lstm_fixed_len_net import SimpleLSTMFixedLenNet
+from src.utils.metric.multi_label_classification_metric import MultiLabelClassificationMetric
 from src.utils.text.text_preprocessor import TextPreprocessor
 
 """
@@ -27,6 +28,7 @@ of the 8 AUCs, for each image [5].
 In other words, the score is the average of the individual 
 AUCs of each predicted emotion. To compute this score, 
 we use the Scikit-learn implementation11.
+https://scikit-learn.org/stable/modules/generated/sklearn.metrics.auc.html
 """
 
 
@@ -58,13 +60,10 @@ class SimpleLSTMFixedLenLitModel(LightningModule):
             glove_embeddings = text_preprocessor.load_glove_embeddings(glove_file=glove_file_path)
             self.model.replace_with_glove_embeddings(glove_embeddings)
         self.criterion = torch.nn.BCEWithLogitsLoss()
-        init_metric = partial(AUROC,
-                              pos_label=1,
-                              num_classes=self.hparams.num_classes,
-                              average='micro')
-        self.train_accuracy = init_metric()
-        self.val_accuracy = init_metric()
-        self.test_accuracy = init_metric()
+        metric_func = MultiLabelClassificationMetric.get_implementation(MultiLabelClassificationMetric.RocCurve_Scikit)
+        self.train_accuracy = metric_func
+        self.val_accuracy = metric_func
+        self.test_accuracy = metric_func
 
     def forward(self, x: torch.Tensor):
         return self.model(x)

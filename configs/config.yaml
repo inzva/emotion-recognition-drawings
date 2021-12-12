@@ -11,7 +11,7 @@ defaults:
 
   - mode: default.yaml
 
-  - experiment: simple_lstm_fixed_len_elmo_embeddings_local.yaml # bert_emoreccom_local.yaml
+  - experiment: simple_lstm_fixed_len_local.yaml #simple_lstm_fixed_len_elmo_embeddings_local.yaml, bert_emoreccom_local.yaml
   - hparams_search: null
 
   # enable color logging
