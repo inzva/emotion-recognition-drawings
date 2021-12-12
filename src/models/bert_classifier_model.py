@@ -8,6 +8,7 @@ from typing import Optional
 from src.datamodules.datasets.dataset_output import DatasetOutput
 from src.models.modules.bert_classifier import BertClassifier
 from src.utils.metric.micro_auc import compute_micro_auc
+from src.utils.metric.multi_label_classification_metric import MultiLabelClassificationMetric
 
 
 class BertClassifierLitModel(LightningModule):
@@ -39,7 +40,7 @@ class BertClassifierLitModel(LightningModule):
             )
         self.model = BertClassifier(bert_model, num_classes, dropout_rate)
         self.criterion = torch.nn.BCEWithLogitsLoss()
-        self.metric = compute_micro_auc
+        self.metric = MultiLabelClassificationMetric.get_implementation(MultiLabelClassificationMetric.RocCurve_Scikit)
 
     def forward(self, ids, mask):
         return self.model(ids, mask)
@@ -67,21 +68,21 @@ class BertClassifierLitModel(LightningModule):
         loss, preds, targets = self.step(batch)
         micro_auc = self.metric(preds, targets)
         self.log("train/bce_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-        self.log("train/micro_auc", micro_auc, on_step=True, on_epoch=True, prog_bar=True)
+        self.log("train/roc_auc_score", micro_auc, on_step=True, on_epoch=True, prog_bar=True)
         return {"loss": loss, "preds": preds, "targets": targets}
 
     def validation_step(self, batch: Any, batch_idx: int):
         loss, preds, targets = self.step(batch)
         micro_auc = self.metric(preds, targets)
         self.log("val/bce_loss", loss, on_step=False, on_epoch=True, prog_bar=False)
-        self.log("val/micro_auc", micro_auc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/roc_auc_score", micro_auc, on_step=False, on_epoch=True, prog_bar=True)
         return {"loss": loss, "preds": preds, "targets": targets}
 
     def test_step(self, batch: Any, batch_idx: int):
         loss, preds, targets = self.step(batch)
         micro_auc = self.metric(preds, targets)
         self.log("test/bce_loss", loss, on_step=False, on_epoch=True, prog_bar=False)
-        self.log("test/micro_auc", micro_auc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("test/roc_auc_score", micro_auc, on_step=False, on_epoch=True, prog_bar=True)
         return {"loss": loss, "preds": preds, "targets": targets}
 
     # TODO: @all read this https://www.fast.ai/2018/07/02/adam-weight-decay/ to understand AdamW
