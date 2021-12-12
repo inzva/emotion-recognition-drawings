@@ -22,24 +22,26 @@ trainer:
   gradient_clip_val: 0.5
 
 model:
-  vocab_size: 6900
-  embedding_dim: 128
-  hidden_dim: 1024
+  vocab_size: 0
+  embedding_dim: 1024
+  hidden_dim: 2048
   num_classes: 8
   dropout_rate: 0.2
   lr: 0.00003
   weight_decay: 0.0005
-  use_glove_embeddings: True # this updates embedding size to 50
+  use_glove_embeddings: False # this updates embedding size to 50
   glove_file_path: /home/gsoykan20/Desktop/self_development/emotion-recognition-drawings/data/glove.6B.50d.txt
+  use_elmo_embeddings: True
 
 datamodule:
   data_dir: /home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/ # /userfiles/comics_grp/multimodal_emotion_recognition_on_comics_scenes/
   modality: 1
-  text_encoding_max_length: 120
+  tokenizer_max_len: 100
   batch_size: 64
   train_val_test_split: [ 5112, 500, 500 ]
   num_workers: 0
   pin_memory: False
+  use_elmo_tokens: True
 
 callbacks:
   model_checkpoint:

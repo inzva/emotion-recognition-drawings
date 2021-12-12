@@ -9,8 +9,9 @@ from torchvision.transforms import transforms
 from src.datamodules.datasets.dataset_modality import DatasetModality
 from src.datamodules.datasets.emoreccom import EmoRecComDataset
 from src.utils.emoreccom_label_transforms import normalize_and_take_top_n
+from src.utils.text.elmo_embedder import ElmoTextEmbedder
 from src.utils.text.text_preprocessor import TextPreprocessor
-from src.utils.text.text_utils import text_transform_for_tokenizer
+from src.utils.text.text_utils import text_transform_for_tokenizer, text_transform_for_elmo_embeddings_to_character_indexes
 
 
 class EmoRecComDataModule(LightningDataModule):
@@ -18,8 +19,11 @@ class EmoRecComDataModule(LightningDataModule):
             self,
             data_dir: str = "data/",
             modality: DatasetModality = DatasetModality.VisionAndText,
+            # Activate If you are using BERT Tokenizer
             use_tokenizer_instead_text_preprocessor: bool = True,
             tokenizer_name: str = "squeezebert/squeezebert-uncased",
+            # Use Elmo Embeddings, Note that use_tokenizer_instead_text_preprocessor and tokens are exclusive to each other.
+            use_elmo_tokens: bool = False,
             tokenizer_max_len: int = 100,
             use_label_transform: bool = False,
             # Train dataset length 6112
@@ -34,6 +38,7 @@ class EmoRecComDataModule(LightningDataModule):
         self.use_tokenizer_instead_text_preprocessor = use_tokenizer_instead_text_preprocessor
         self.tokenizer_name = tokenizer_name
         self.tokenizer_max_len = tokenizer_max_len
+        self.use_elmo_tokens = use_elmo_tokens
         self.data_dir = data_dir
         self.modality = modality
         self.use_private_test_set = use_private_test_set
@@ -69,6 +74,10 @@ class EmoRecComDataModule(LightningDataModule):
                                      truncation=True,
                                      )
             self.text_transform = lambda texts: text_transform_for_tokenizer(tokenizer_func, texts)
+        elif self.use_elmo_tokens:
+            tokenizer_func = partial(ElmoTextEmbedder.find_character_indexes,
+                                     max_sentence_length=self.tokenizer_max_len)
+            self.text_transform = lambda texts: text_transform_for_elmo_embeddings_to_character_indexes(tokenizer_func, texts)
         else:
             dataset = EmoRecComDataset(self.data_dir, train=True)
             text_preprocessor = TextPreprocessor(dataset,

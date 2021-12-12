@@ -40,6 +40,7 @@ class SimpleLSTMFixedLenLitModel(LightningModule):
             dropout_rate: float = 0.2,
             use_glove_embeddings: bool = False,
             glove_file_path: str = None,
+            use_elmo_embeddings: bool = False,
             lr: float = 0.001,
             weight_decay: float = 0.0005,
     ):
@@ -49,7 +50,8 @@ class SimpleLSTMFixedLenLitModel(LightningModule):
                                            embedding_dim,
                                            hidden_dim,
                                            num_classes,
-                                           dropout_rate)
+                                           dropout_rate,
+                                           use_elmo_embeddings)
         if use_glove_embeddings:
             text_preprocessor = TextPreprocessor(dataset=None)
             text_preprocessor.create_vocabulary()

@@ -31,3 +31,17 @@ def text_transform_for_tokenizer(tokenizer_func, texts):
         "ids": torch.tensor(ids, dtype=torch.long),
         "mask": torch.tensor(mask, dtype=torch.long)
     }
+
+
+def text_transform_for_elmo_embeddings_to_character_indexes(tokenizer_func, texts):
+    """ Transforms text data into Elmo Embeddings
+
+    @param tokenizer_func: find_character_indexes function of ElmoTextEmbedder
+    @param texts:  list of texts in a panel
+    @return: elmo character indexes
+    """
+    merged_text = merge_comic_texts(texts)
+    character_ids = tokenizer_func(sentences=merged_text)
+    return character_ids
+    # elmo_representations = inputs['elmo_representations'][0]
+    # return elmo_representations[0]

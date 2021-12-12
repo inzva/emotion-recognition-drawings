@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+from src.utils.text.elmo_embedder import ElmoTextEmbedder
+
 
 class SimpleLSTMFixedLenNet(torch.nn.Module):
     def __init__(self,
@@ -8,12 +10,18 @@ class SimpleLSTMFixedLenNet(torch.nn.Module):
                  embedding_dim: int = 128,
                  hidden_dim: int = 128,
                  num_classes: int = 8,
-                 dropout_rate: float = 0.2):
+                 dropout_rate: float = 0.2,
+                 # Needs Elmo Tokens
+                 use_elmo_embeddings: bool = False):
         super().__init__()
         self.vocab_size = vocab_size
         self.hidden_dim = hidden_dim
+        self.use_elmo_embeddings = use_elmo_embeddings
         # https://pytorch.org/docs/stable/generated/torch.nn.Embedding.html
-        self.embeddings = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
+        if use_elmo_embeddings:
+            self.embeddings = ElmoTextEmbedder()
+        else:
+            self.embeddings = nn.Embedding(vocab_size, embedding_dim, padding_idx=0)
         # https://pytorch.org/docs/stable/generated/torch.nn.LSTM.html
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
         self.linear = nn.Linear(hidden_dim, num_classes)
@@ -29,7 +37,11 @@ class SimpleLSTMFixedLenNet(torch.nn.Module):
         self.lstm = nn.LSTM(glove_embedding_dim, self.hidden_dim, batch_first=True)
 
     def forward(self, x):
-        x = self.embeddings(x)
-        x = self.dropout(x)
+        if self.use_elmo_embeddings:
+            B, _, T, E = x.size()
+            x = self.embeddings(x.view(B, T, E))
+        else:
+            x = self.embeddings(x)
+            x = self.dropout(x)
         lstm_out, (ht, ct) = self.lstm(x)
         return self.linear(ht[-1])
