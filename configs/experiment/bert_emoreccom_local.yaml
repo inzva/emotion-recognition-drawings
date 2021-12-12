@@ -27,11 +27,12 @@ model:
   dropout_rate: 0.2
   # n_train_steps = int(len(train_dataset) / config.batch_size * num_epoch)
   num_train_steps: 15975 # 5112 / 32 * 100
-  lr: 0.001
+  lr: 0.00003
+  use_scheduler: True
   weight_decay: 0.0005
   scheduler_num_warmup_steps: 0
   bert_model_name: squeezebert/squeezebert-uncased
-  pretrained_lit_model_for_body_checkpoint: /home/gsoykan20/Desktop/self_development/emotion-recognition-drawings/logs/custom_runs/bert_model_goemotions_epoch_008.ckpt
+  pretrained_lit_model_for_body_checkpoint: null #/home/gsoykan20/Desktop/self_development/emotion-recognition-drawings/logs/custom_runs/bert_model_goemotions_epoch_008.ckpt
 
 datamodule:
   data_dir: /home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/ # /userfiles/comics_grp/datasets/EmoRecCom/
@@ -44,10 +45,10 @@ datamodule:
   use_tokenizer_instead_text_preprocessor: True
   tokenizer_name: squeezebert/squeezebert-uncased
   tokenizer_max_len: 80
-  use_label_transform: True
+  use_label_transform: False
 
 callbacks:
   model_checkpoint:
-    monitor: "val/micro_auc"
+    monitor: "val/roc_auc_score"
   early_stopping:
-    monitor: "val/micro_auc"
+    monitor: "val/roc_auc_score"
