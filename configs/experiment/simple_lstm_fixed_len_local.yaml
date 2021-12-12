@@ -40,6 +40,7 @@ datamodule:
   train_val_test_split: [ 5112, 500, 500 ]
   num_workers: 0
   pin_memory: False
+  damp_labels_if_text_is_empty: True
 
 callbacks:
   model_checkpoint:

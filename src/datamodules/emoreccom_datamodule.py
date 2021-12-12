@@ -11,7 +11,8 @@ from src.datamodules.datasets.emoreccom import EmoRecComDataset
 from src.utils.emoreccom_label_transforms import normalize_and_take_top_n
 from src.utils.text.elmo_embedder import ElmoTextEmbedder
 from src.utils.text.text_preprocessor import TextPreprocessor
-from src.utils.text.text_utils import text_transform_for_tokenizer, text_transform_for_elmo_embeddings_to_character_indexes
+from src.utils.text.text_utils import text_transform_for_tokenizer, \
+    text_transform_for_elmo_embeddings_to_character_indexes
 
 
 class EmoRecComDataModule(LightningDataModule):
@@ -26,6 +27,7 @@ class EmoRecComDataModule(LightningDataModule):
             use_elmo_tokens: bool = False,
             tokenizer_max_len: int = 100,
             use_label_transform: bool = False,
+            damp_labels_if_text_is_empty: bool = False,
             # Train dataset length 6112
             train_val_test_split: Tuple[int, int, int] = (5112, 500, 500),
             text_encoding_max_length: int = 120,
@@ -44,6 +46,7 @@ class EmoRecComDataModule(LightningDataModule):
         self.use_private_test_set = use_private_test_set
         self.train_val_test_split = train_val_test_split
         self.text_encoding_max_length = text_encoding_max_length
+        self.damp_labels_if_text_is_empty = damp_labels_if_text_is_empty
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
@@ -77,7 +80,8 @@ class EmoRecComDataModule(LightningDataModule):
         elif self.use_elmo_tokens:
             tokenizer_func = partial(ElmoTextEmbedder.find_character_indexes,
                                      max_sentence_length=self.tokenizer_max_len)
-            self.text_transform = lambda texts: text_transform_for_elmo_embeddings_to_character_indexes(tokenizer_func, texts)
+            self.text_transform = lambda texts: text_transform_for_elmo_embeddings_to_character_indexes(tokenizer_func,
+                                                                                                        texts)
         else:
             dataset = EmoRecComDataset(self.data_dir, train=True)
             text_preprocessor = TextPreprocessor(dataset,
@@ -105,7 +109,8 @@ class EmoRecComDataModule(LightningDataModule):
                               modality=self.modality,
                               text_transform=self.text_transform,
                               vision_transform=self.vision_transform,
-                              label_transform=self.label_transform)
+                              label_transform=self.label_transform,
+                              damp_labels_if_text_is_empty=self.damp_labels_if_text_is_empty)
             self.data_train = dataset(specific_slice=slice(0, self.train_val_test_split[0]))
             self.data_val = dataset(specific_slice=slice(self.train_val_test_split[0],
                                                          self.train_val_test_split[0] + self.train_val_test_split[1]))

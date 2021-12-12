@@ -3,7 +3,6 @@ import cv2
 import json
 import numpy as np
 from torch.utils.data import Dataset
-from typing import Optional, Set
 from src.datamodules.datasets.dataset_modality import DatasetModality
 
 
@@ -16,11 +15,9 @@ class EmoRecComDataset(Dataset):
             text_transform=None,
             vision_transform=None,
             label_transform=None,
-            specific_slice=None
+            specific_slice=None,
+            damp_labels_if_text_is_empty: bool = False
     ):
-        if isinstance(modality, int):
-            modality = DatasetModality(modality)
-        # Fixing label transform options to enum if they are int's.
         """EmoRecCom pytorch dataset
 
         @param data_dir: Directory of the dataset.
@@ -35,9 +32,16 @@ class EmoRecComDataset(Dataset):
         @param text_transform: transform function for vision data(image),
             usually this is includes normalization and various augmentations.
         @param specific_slice: Optional. If provided it slices dataset to provided value.
+        @param damp_labels_if_text_is_empty: bool. There are instances with empty 
+        text inputs. They should not indicate any labels as 1. If this is true, labels of
+        such instances will be all zeroes.
         """
+        if isinstance(modality, int):
+            modality = DatasetModality(modality)
+        # Fixing label transform options to enum if they are int's.
         super().__init__()
         self.modality = modality
+        self.damp_labels_if_text_is_empty = damp_labels_if_text_is_empty
         self.specific_slice = specific_slice
         self.text_transform = text_transform
         self.vision_transform = vision_transform
@@ -70,6 +74,10 @@ class EmoRecComDataset(Dataset):
 
     def __getitem__(self, index):
         img, img_info, labels, texts = self.pull_item(index)
+        if self.damp_labels_if_text_is_empty and \
+                not texts[0] and \
+                not texts[1]:
+            labels[0] = np.zeros_like(labels[0])
         # -----------------------------------------------------------------
         # TO DO: add additional preprocessing for both image and text data
         # -----------------------------------------------------------------
