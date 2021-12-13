@@ -1,0 +1,12 @@
+_target_: src.datamodules.emoreccom_bb_datamodule.EmoRecComBBDataModule
+
+data_dir: ${data_dir} # data_dir is specified in config.yaml
+modality: 1
+text_encoding_max_length: 120
+batch_size: 64
+train_val_test_split: [ 5112, 500, 500 ]
+num_workers: 0
+pin_memory: False
+use_tokenizer_instead_text_preprocessor: False
+tokenizer_name: null
+tokenizer_max_len: null

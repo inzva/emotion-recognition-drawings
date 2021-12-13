@@ -1,12 +1,12 @@
 # @package _global_
 
 # to execute this experiment run:
-# python run.py experiment=emotic_baseline_local.yaml
+# python run.py experiment=vision_baseline_on_emoreccom.yaml
 
 defaults:
   - override /trainer: default.yaml
   - override /model: vision_baseline_model.yaml
-  - override /datamodule: emoreccom_datamodule.yaml
+  - override /datamodule: emoreccom_bb_datamodule.yaml
   - override /callbacks: default.yaml
   - override /logger: tensorboard.yaml
 
@@ -32,7 +32,6 @@ model:
 datamodule:
   data_dir: "/home/ckoksal20/Documents/emorec"
   modality: 3
-  text_encoding_max_length: 120
   batch_size: 32
   train_val_test_split: [ 5112, 500, 500 ]
   num_workers: 0
@@ -40,6 +39,7 @@ datamodule:
   use_tokenizer_instead_text_preprocessor: True
   tokenizer_name: squeezebert/squeezebert-uncased
   tokenizer_max_len: 80
+
 
 
 
