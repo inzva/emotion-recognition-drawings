@@ -147,3 +147,7 @@ wandb/
 .autoenv
 /notebooks/model.pth
 /notebooks/yolox_outputs/
+
+notebooks/results.zip
+
+notebooks/results.csv

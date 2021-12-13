@@ -211,4 +211,4 @@ class EmoRecComDataset(Dataset):
                 for emotion in polarity_dict.keys():
                     annotations[img_id]["polarity"][self.emotion_dict[emotion]] = polarity_dict[emotion]
 
-        return files, 
+        return files, annotations

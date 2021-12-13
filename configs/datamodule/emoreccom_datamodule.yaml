@@ -10,3 +10,4 @@ pin_memory: False
 use_tokenizer_instead_text_preprocessor: False
 tokenizer_name: null
 tokenizer_max_len: null
+use_label_transform: False
