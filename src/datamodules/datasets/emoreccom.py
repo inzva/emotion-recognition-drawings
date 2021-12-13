@@ -2,11 +2,9 @@ import os
 import cv2
 import json
 import numpy as np
-
 from torch.utils.data import Dataset
-
 from src.datamodules.datasets.dataset_modality import DatasetModality
-import json
+
 
 class EmoRecComDataset(Dataset):
     def __init__(
@@ -16,13 +14,11 @@ class EmoRecComDataset(Dataset):
             modality: DatasetModality = DatasetModality.VisionAndText,
             text_transform=None,
             vision_transform=None,
+            label_transform=None,
             specific_slice=None,
-            person_bb = False
+            damp_labels_if_text_is_empty: bool = False
     ):
-        if isinstance(modality, int):
-            modality = DatasetModality(modality)
         """EmoRecCom pytorch dataset
-
         @param data_dir: Directory of the dataset.
         @param train: If false, the dataset is in test mode and
             test mode does not have ground truth labels so it returns all 0's.
@@ -35,12 +31,20 @@ class EmoRecComDataset(Dataset):
         @param text_transform: transform function for vision data(image),
             usually this is includes normalization and various augmentations.
         @param specific_slice: Optional. If provided it slices dataset to provided value.
+        @param damp_labels_if_text_is_empty: bool. There are instances with empty 
+        text inputs. They should not indicate any labels as 1. If this is true, labels of
+        such instances will be all zeroes.
         """
+        if isinstance(modality, int):
+            modality = DatasetModality(modality)
+        # Fixing label transform options to enum if they are int's.
         super().__init__()
         self.modality = modality
+        self.damp_labels_if_text_is_empty = damp_labels_if_text_is_empty
         self.specific_slice = specific_slice
         self.text_transform = text_transform
         self.vision_transform = vision_transform
+        self.label_transform = label_transform
         self.emotion_dict = {
             "angry": 0,
             "disgust": 1,
@@ -56,13 +60,6 @@ class EmoRecComDataset(Dataset):
         if specific_slice is not None:
             self.files = self.files[specific_slice]
 
-        self.person_bb = person_bb
-        if self.person_bb:
-            self.bbx_anns =  json.load(
-                open('/home/ckoksal20/Documents/emotion-recognition-drawings/selected_bbox.json',
-                'r'))
-        
-
     def __len__(self):
         return len(self.files)
 
@@ -71,41 +68,27 @@ class EmoRecComDataset(Dataset):
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Vision]:
             img, img_info = self.load_image(index)
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Text]:
-            if self.person_bb:
-                labels, texts, selected_bb = self.load_anno(index)
-                return img, img_info, labels, texts, selected_bb
-            else:
-                return img, img_info, labels, texts
-
+            labels, texts = self.load_anno(index)
+        return img, img_info, labels, texts
 
     def __getitem__(self, index):
-        img, img_info, labels, texts, selected_bb = self.pull_item(index)
+        img, img_info, labels, texts = self.pull_item(index)
+        if self.damp_labels_if_text_is_empty and \
+                not texts[0] and \
+                not texts[1]:
+            labels[0] = np.zeros_like(labels[0])
         # -----------------------------------------------------------------
         # TO DO: add additional preprocessing for both image and text data
         # -----------------------------------------------------------------
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Vision] \
                 and self.vision_transform is not None:
-            
-            if self.person_bb:
-                # Extract Bounding Box - Person BB
-                xmin,ymin,width, height = selected_bb
-                xmin,ymin,width, height = int(xmin), int(ymin) ,int(width), int(height)
-                cropped_image = img[ymin :ymin+height, xmin:xmin+width]
-                # Transform Cropped BB
-                cropped_image = self.vision_transform(cropped_image)
-                
-
-            #img, img_info = self.vision_transform(img, img_info) 
-            img = self.vision_transform(img)
-
+            img, img_info = self.vision_transform(img, img_info)
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Text] \
                 and self.text_transform is not None:
             texts = self.text_transform(texts)
-
-        if self.person_bb:
-            return img, img_info, labels, texts, cropped_image
-        else:
-            return img, img_info, labels, texts
+        if self.label_transform is not None:
+            labels = self.label_transform(labels)
+        return img, img_info, labels, texts
 
     def load_anno(self, index):
         # given an index, it loads the annotations of the file at that index
@@ -117,13 +100,7 @@ class EmoRecComDataset(Dataset):
         narrative = annots["narrative"]
         dialog = annots["dialog"]
 
-        if self.person_bb:
-            selected_bb =  self.bbx_anns[file]
-            return [label, polarity], [narrative, dialog], selected_bb
-        else:
-            return [label, polarity], [narrative, dialog]
-
-        
+        return [label, polarity], [narrative, dialog]
 
     def load_image(self, index):
         img_path = os.path.join(self.annotations["root_dir"], self.files[index])
@@ -234,4 +211,4 @@ class EmoRecComDataset(Dataset):
                 for emotion in polarity_dict.keys():
                     annotations[img_id]["polarity"][self.emotion_dict[emotion]] = polarity_dict[emotion]
 
-        return files, annotations
+        return files, 
