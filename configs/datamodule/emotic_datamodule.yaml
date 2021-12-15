@@ -1,0 +1,7 @@
+_target_: src.datamodules.emotic_datamodule.EmoticDataModule
+
+data_dir: "/home/ckoksal20/Documents/emotion-recognition-drawings/data"
+save_path: "/home/ckoksal20/Documents/emotion-recognition-drawings/data/emotic_pre"
+batch_size: 128
+num_workers: 0
+pin_memory: False

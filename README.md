@@ -1,8 +1,43 @@
-<div align="center">
+
 
 # emotion-recognition-drawings
 Multi-modal Emotion Recognition on Drawings Project - inzva AI Projects #7
 
+
+# Emotic Dataset 
+# Usage 
+
+
+
+Dataset folder should follow the structure below
+
+
+```
+├── ...
+│   ├── emotic
+│   |    ├── ade20k
+│   |    ├── emodb_small
+│   |    ├── framesdb
+│   |    ├── mscoco 
+│   ├── Annotations
+│   |    ├── Annotations.mat
+```
+Pretrained Models and threshold for inference can be found at : 
+https://drive.google.com/drive/folders/1e-JLA7V73CQD5pjTFCSWnKCmB0gCpV1D
+
+pretrained_weights folder should follow the structure below
+```
+📦pretrained_weights
+ ┣ 📂models
+ ┃ ┣ 📜model_body1.pth
+ ┃ ┣ 📜model_context1.pth
+ ┃ ┗ 📜model_emotic1.pth
+ ┗ 📂places
+ ┃ ┣ 📜resnet18_places365.pth.tar
+ ┃ ┗ 📜resnet18_state_dict.pth
+ ```
+
+<div align="center">
 # Lightning-Hydra-Template
 
 
