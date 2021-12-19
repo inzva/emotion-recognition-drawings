@@ -5,7 +5,7 @@
 
 defaults:
   - override /trainer: default.yaml
-  - override /model: simple_lstm_fixed_len_model.yaml
+  - override /model: vit_classifier_model.yaml
   - override /datamodule: emoreccom_datamodule.yaml
   - override /callbacks: default.yaml
   - override /logger: tensorboard.yaml
@@ -18,32 +18,33 @@ seed: 12345
 trainer:
   gpus: 1
   min_epochs: 1
-  max_epochs: 5
+  max_epochs: 100
   gradient_clip_val: 0.5
 
 model:
-  vocab_size: 6900
-  embedding_dim: 128
-  hidden_dim: 1024
+  feature_extractor_alias: google/vit-base-patch16-224
+  model_alias: google/vit-base-patch16-224-in21k
   num_classes: 8
-  dropout_rate: 0.2
+  # n_train_steps = int(len(train_dataset) / config.batch_size * num_epoch)
+  num_train_steps: 63900 # 5112 / 8 * 100
   lr: 0.00003
   weight_decay: 0.0005
-  use_glove_embeddings: True # this updates embedding size to 50
-  glove_file_path: /home/gsoykan20/Desktop/self_development/emotion-recognition-drawings/data/glove.6B.50d.txt
+  use_scheduler: True
+  scheduler_num_warmup_steps: 0
+  # check DatasetOutput for further information
+  dataset_output: 4
 
 datamodule:
-  data_dir: /home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/ # /userfiles/comics_grp/multimodal_emotion_recognition_on_comics_scenes/
-  modality: 1
-  text_encoding_max_length: 120
-  batch_size: 64
+  data_dir: /home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/ # /userfiles/comics_grp/datasets/EmoRecCom/
+  modality: 2
+  batch_size: 8
   train_val_test_split: [ 5112, 500, 500 ]
   num_workers: 0
   pin_memory: False
-  damp_labels_if_text_is_empty: True
+  use_label_transform: False
 
 callbacks:
   model_checkpoint:
-    monitor: "val/auroc"
+    monitor: "val/roc_auc_score"
   early_stopping:
-    monitor: "val/auroc"
+    monitor: "val/roc_auc_score"

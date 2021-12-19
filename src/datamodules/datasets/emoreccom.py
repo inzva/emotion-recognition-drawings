@@ -65,9 +65,13 @@ class EmoRecComDataset(Dataset):
 
     def pull_item(self, index):
         img, img_info, labels, texts = [], [], [[], []], [[], []]
-        if self.modality in [DatasetModality.VisionAndText, DatasetModality.Vision]:
+        if self.modality in [DatasetModality.VisionAndText]:
             img, img_info = self.load_image(index)
-        if self.modality in [DatasetModality.VisionAndText, DatasetModality.Text]:
+            labels, texts = self.load_anno(index)
+        elif self.modality in [DatasetModality.Vision]:
+            img, img_info = self.load_image(index)
+            labels, _ = self.load_anno(index)
+        elif self.modality in [DatasetModality.Text]:
             labels, texts = self.load_anno(index)
         return img, img_info, labels, texts
 
@@ -77,12 +81,9 @@ class EmoRecComDataset(Dataset):
                 not texts[0] and \
                 not texts[1]:
             labels[0] = np.zeros_like(labels[0])
-        # -----------------------------------------------------------------
-        # TO DO: add additional preprocessing for both image and text data
-        # -----------------------------------------------------------------
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Vision] \
                 and self.vision_transform is not None:
-            img, img_info = self.vision_transform(img, img_info)
+            img = self.vision_transform(img)
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Text] \
                 and self.text_transform is not None:
             texts = self.text_transform(texts)

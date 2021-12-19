@@ -52,8 +52,10 @@ class EmoRecComDataModule(LightningDataModule):
         self.pin_memory = pin_memory
         self.use_label_transform = use_label_transform
         self.vision_transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,)),
-            transforms.Resize((300,300))]
+            [transforms.ToTensor(),
+             transforms.Normalize((0.5,), (0.5,)),
+             transforms.Resize((224, 224))
+             ]
         )
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
