@@ -6,6 +6,8 @@ from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import transforms
 
+from src.datamodules.transform_datamodule import ValTransform, \
+    SlightTransform, MediumTransform, FullTransform
 from src.datamodules.datasets.dataset_modality import DatasetModality
 from src.datamodules.datasets.emoreccom import EmoRecComDataset
 from src.utils.emoreccom_label_transforms import normalize_and_take_top_n
@@ -13,6 +15,7 @@ from src.utils.text.elmo_embedder import ElmoTextEmbedder
 from src.utils.text.text_preprocessor import TextPreprocessor
 from src.utils.text.text_utils import text_transform_for_tokenizer, \
     text_transform_for_elmo_embeddings_to_character_indexes
+
 
 
 class EmoRecComDataModule(LightningDataModule):
@@ -34,9 +37,15 @@ class EmoRecComDataModule(LightningDataModule):
             use_private_test_set: bool = False,
             batch_size: int = 64,
             num_workers: int = 0,
-            pin_memory: bool = False
+            pin_memory: bool = False,
+            # 0 for no augmentation, 1 for slight, 2 for medium and 3 for full, 4 for old
+            # check datamodule > transform_datamodule.py for details
+            image_augment_strength: int = 0 
     ):
         super().__init__()
+        
+        assert image_augment_strength in [0, 1, 2, 3, 4]
+        
         self.use_tokenizer_instead_text_preprocessor = use_tokenizer_instead_text_preprocessor
         self.tokenizer_name = tokenizer_name
         self.tokenizer_max_len = tokenizer_max_len
@@ -51,12 +60,25 @@ class EmoRecComDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.use_label_transform = use_label_transform
-        self.vision_transform = transforms.Compose(
-            [transforms.ToTensor(),
-             transforms.Normalize((0.5,), (0.5,)),
-             transforms.Resize((224, 224))
-             ]
-        )
+        
+        image_augment_types = {
+            0: ValTransform,
+            1: SlightTransform,
+            2: MediumTransform,
+            3: FullTransform,
+            4: transforms.Compose(
+                [transforms.ToTensor(),
+                 transforms.Normalize((0.5,), (0.5,)),
+                 transforms.Resize((224, 224))
+                ]
+            )
+        }
+        
+        self.vision_transform = image_augment_types[image_augment_strength]
+        if image_augment_strength < 4:
+            self.vision_transform = self.vision_transform()
+        
+        
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
         self.data_test: Optional[Dataset] = None

@@ -13,3 +13,4 @@ tokenizer_max_len: null
 use_label_transform: False
 use_elmo_tokens: False
 damp_labels_if_text_is_empty: False
+image_augment_strength: 4

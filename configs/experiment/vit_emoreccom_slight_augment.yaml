@@ -33,16 +33,18 @@ model:
   scheduler_num_warmup_steps: 0
   # check DatasetOutput for further information
   dataset_output: 4
-  image_augment_strength: 4
 
 datamodule:
-  data_dir: /home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/ # /userfiles/comics_grp/datasets/EmoRecCom/
+  data_dir: /userfiles/comics_grp/datasets/EmoRecCom/
   modality: 2
   batch_size: 8
   train_val_test_split: [ 5112, 500, 500 ]
   num_workers: 0
   pin_memory: False
   use_label_transform: False
+  # 0 for no augmentation, 1 for slight, 2 for medium and 3 for full, 0 for old/legacy
+  # check datamodule > transform_datamodule.py for details
+  image_augment_strength: 1
 
 callbacks:
   model_checkpoint:
