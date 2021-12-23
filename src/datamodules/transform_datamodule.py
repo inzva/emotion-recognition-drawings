@@ -21,8 +21,11 @@ from typing import Union, Tuple
 from torchvision.transforms import transforms
 
 
-CropType = enum.Enum("CropType", "NoCrop Center Random")
-     
+class CropType(enum.Enum, str):
+    NoCrop = "NoCrop",
+    Center = "Center",
+    Random = "Random"
+
 class ImageTransform:
     
     """ Parameters:
