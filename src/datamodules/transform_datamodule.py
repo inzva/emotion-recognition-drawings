@@ -21,10 +21,10 @@ from typing import Union, Tuple
 from torchvision.transforms import transforms
 
 
-class CropType(enum.Enum, str):
-    NoCrop = "NoCrop",
-    Center = "Center",
-    Random = "Random"
+class CropType(enum.Enum):
+    NoCrop = 0
+    Center = 1
+    Random = 2
 
 class ImageTransform:
     
@@ -110,11 +110,11 @@ class ImageTransform:
                               scale, shear, perspective, border),
         ]
         
-        if type(resize_len) != int or resize_len > 0.0:
-            self.operations.append(Resize(resize_len))
-        
         if pad_to_square:
             self.operations.append(PadSquare())
+        
+        if type(resize_len) != int or resize_len > 0.0:
+            self.operations.append(Resize(resize_len))
             
         self.normalizer = transforms.Compose(
             [transforms.ToTensor(),
@@ -299,7 +299,7 @@ class PadSquare:
         h, w = image.shape[:2]
         
         if h == w:
-            return img
+            return image
         else:
             padded_img = np.ones((max(h, w), max(h, w), 3), dtype=np.uint8) * self.pad_pixel
             padded_img[:h, :w, ...] = image
