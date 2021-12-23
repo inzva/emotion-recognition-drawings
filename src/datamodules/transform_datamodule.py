@@ -214,7 +214,7 @@ class ColorDistortion:
         self.vgain          = vgain
         
     def __call__(self, img):
-        
+
         if random.random() < self.grayscale_prob:
             gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             gray_img = cv2.cvtColor(gray_img, cv2.COLOR_GRAY2BGR)
@@ -234,7 +234,7 @@ class ColorDistortion:
                 (cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val))
             ).astype(dtype)
             cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR, dst=img)  # no return needed
-            return img_hsv
+            return img
         else:
             return img
 
