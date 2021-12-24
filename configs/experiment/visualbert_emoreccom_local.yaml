@@ -36,7 +36,7 @@ model:
 
 datamodule:
   data_dir: /home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/ # /userfiles/comics_grp/datasets/EmoRecCom/
-  modality: 1
+  modality: 4
   text_encoding_max_length: 120
   batch_size: 32
   train_val_test_split: [ 5112, 500, 500 ]
