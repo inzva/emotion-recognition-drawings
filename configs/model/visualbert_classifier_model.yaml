@@ -1,0 +1,13 @@
+_target_: src.models.visual_bert_classifier_model.VisualBertClassifierLitModel
+
+visual_bert_model_name: uclanlp/visualbert-vqa-coco-pre
+num_classes: 8
+# n_train_steps = int(len(train_dataset) / config.batch_size * num_epoch)
+num_train_steps: 67828 # (43410 / 64) * 100
+lr: 0.00003
+weight_decay: 0.0005
+use_scheduler: True
+scheduler_num_warmup_steps: 0
+# check DatasetOutput for further information
+dataset_output: 5
+pretrained_lit_model_for_body_checkpoint: null

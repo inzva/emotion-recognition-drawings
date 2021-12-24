@@ -9,8 +9,12 @@ num_workers: 0
 pin_memory: False
 use_tokenizer_instead_text_preprocessor: False
 tokenizer_name: null
+tokenizer_get_token_type_ids: null
 tokenizer_max_len: null
 use_label_transform: False
 use_elmo_tokens: False
 damp_labels_if_text_is_empty: False
 image_augment_strength: 4
+additional_info_extractor: null
+face_body_embedding_base_path: null
+face_body_embedding_max_seq_len: null

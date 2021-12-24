@@ -6,3 +6,4 @@ class DatasetOutput(enum.Enum):
     EmoRecComTransformerTokenizedOutput = 2
     GoEmotionsOutput = 3
     EmoRecComVisionOutput = 4
+    EmoRecComVisualBertOutput = 5

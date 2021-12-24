@@ -16,7 +16,8 @@ class EmoRecComDataset(Dataset):
             vision_transform=None,
             label_transform=None,
             specific_slice=None,
-            damp_labels_if_text_is_empty: bool = False
+            damp_labels_if_text_is_empty: bool = False,
+            additional_info_extractor=None
     ):
         """EmoRecCom pytorch dataset
         @param data_dir: Directory of the dataset.
@@ -34,17 +35,22 @@ class EmoRecComDataset(Dataset):
         @param damp_labels_if_text_is_empty: bool. There are instances with empty 
         text inputs. They should not indicate any labels as 1. If this is true, labels of
         such instances will be all zeroes.
+        @param additional_info_extractor: when provided this should be function that takes
+        filename & train for the index and returns tensor transformable additional information
+        to the element, e.g. face_body embeddings extracted from YOLOX_FB model.
         """
         if isinstance(modality, int):
             modality = DatasetModality(modality)
         # Fixing label transform options to enum if they are int's.
         super().__init__()
+        self.train = train
         self.modality = modality
         self.damp_labels_if_text_is_empty = damp_labels_if_text_is_empty
         self.specific_slice = specific_slice
         self.text_transform = text_transform
         self.vision_transform = vision_transform
         self.label_transform = label_transform
+        self.additional_info_extractor = additional_info_extractor
         self.emotion_dict = {
             "angry": 0,
             "disgust": 1,
@@ -73,6 +79,8 @@ class EmoRecComDataset(Dataset):
             labels, _ = self.load_anno(index)
         elif self.modality in [DatasetModality.Text]:
             labels, texts = self.load_anno(index)
+        elif self.modality in [DatasetModality.TextAndFaceBodyEmbeddings]:
+            labels, texts = self.load_anno(index)
         return img, img_info, labels, texts
 
     def __getitem__(self, index):
@@ -84,11 +92,15 @@ class EmoRecComDataset(Dataset):
         if self.modality in [DatasetModality.VisionAndText, DatasetModality.Vision] \
                 and self.vision_transform is not None:
             img = self.vision_transform(img)
-        if self.modality in [DatasetModality.VisionAndText, DatasetModality.Text] \
+        if self.modality in [DatasetModality.VisionAndText,
+                             DatasetModality.Text,
+                             DatasetModality.TextAndFaceBodyEmbeddings] \
                 and self.text_transform is not None:
             texts = self.text_transform(texts)
         if self.label_transform is not None:
             labels = self.label_transform(labels)
+        if self.additional_info_extractor:
+            return img, img_info, labels, texts, self.additional_info_extractor(self.files[index], self.train)
         return img, img_info, labels, texts
 
     def load_anno(self, index):

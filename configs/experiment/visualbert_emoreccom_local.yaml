@@ -1,0 +1,58 @@
+# @package _global_
+
+# to execute this experiment run:
+# python run.py experiment=example_simple.yaml
+
+defaults:
+  - override /trainer: default.yaml
+  - override /model: visualbert_classifier_model.yaml
+  - override /datamodule: emoreccom_datamodule.yaml
+  - override /callbacks: default.yaml
+  - override /logger: tensorboard.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+seed: 12345
+
+trainer:
+  gpus: 1
+  min_epochs: 1
+  max_epochs: 100
+  gradient_clip_val: 0.5
+
+model:
+  num_classes: 8
+  dataset_output: 5
+  dropout_rate: 0.2
+  # n_train_steps = int(len(train_dataset) / config.batch_size * num_epoch)
+  num_train_steps: 15975 # 5112 / 32 * 100
+  lr: 0.00003
+  use_scheduler: True
+  weight_decay: 0.0005
+  scheduler_num_warmup_steps: 0
+  visual_bert_model_name: uclanlp/visualbert-vqa-coco-pre
+  pretrained_lit_model_for_body_checkpoint: null
+
+datamodule:
+  data_dir: /home/gsoykan20/Desktop/datasets/multimodal_emotion_recognition_on_comics_scenes/ # /userfiles/comics_grp/datasets/EmoRecCom/
+  modality: 1
+  text_encoding_max_length: 120
+  batch_size: 32
+  train_val_test_split: [ 5112, 500, 500 ]
+  num_workers: 0
+  pin_memory: False
+  use_tokenizer_instead_text_preprocessor: True
+  tokenizer_name: bert-base-uncased
+  tokenizer_max_len: 80
+  use_label_transform: False
+  tokenizer_get_token_type_ids: True
+  face_body_embedding_max_seq_len: 8
+  face_body_embedding_base_path: /home/gsoykan20/Desktop/self_development/emotion-recognition-drawings/data/emoreccom_face_body_embeddings_96d/
+  additional_info_extractor: 1
+
+callbacks:
+  model_checkpoint:
+    monitor: "val/roc_auc_score"
+  early_stopping:
+    monitor: "val/roc_auc_score"
