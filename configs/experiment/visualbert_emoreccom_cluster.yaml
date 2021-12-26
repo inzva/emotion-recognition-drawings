@@ -5,7 +5,7 @@
 
 defaults:
   - override /trainer: default.yaml
-  - override /model: vit_classifier_model.yaml
+  - override /model: visualbert_classifier_model.yaml
   - override /datamodule: emoreccom_datamodule.yaml
   - override /callbacks: default.yaml
   - override /logger: tensorboard.yaml
@@ -22,29 +22,34 @@ trainer:
   gradient_clip_val: 0.5
 
 model:
-  feature_extractor_alias: google/vit-base-patch16-224
-  model_alias: google/vit-base-patch16-224-in21k
   num_classes: 8
+  dataset_output: 5
+  dropout_rate: 0.2
   # n_train_steps = int(len(train_dataset) / config.batch_size * num_epoch)
   num_train_steps: 7987 # 5112 / 64 * 100
   lr: 0.00003
-  weight_decay: 0.0005
   use_scheduler: True
+  weight_decay: 0.0005
   scheduler_num_warmup_steps: 0
-  # check DatasetOutput for further information
-  dataset_output: 4
+  visual_bert_model_name: uclanlp/visualbert-vqa-coco-pre
+  pretrained_lit_model_for_body_checkpoint: null
 
 datamodule:
   data_dir: /userfiles/comics_grp/datasets/EmoRecCom/
-  modality: 2
+  modality: 4
+  text_encoding_max_length: 120
   batch_size: 64
   train_val_test_split: [ 5112, 500, 500 ]
   num_workers: 0
   pin_memory: False
+  use_tokenizer_instead_text_preprocessor: True
+  tokenizer_name: bert-base-uncased
+  tokenizer_max_len: 80
   use_label_transform: False
-  # 0 for no augmentation, 1 for slight, 2 for medium and 3 for full, 4 for old/legacy
-  # check datamodule > transform_datamodule.py for details
-  image_augment_strength: 1
+  tokenizer_get_token_type_ids: True
+  face_body_embedding_max_seq_len: 8
+  face_body_embedding_base_path: /userfiles/comics_grp/datasets/EmoRecCom/emoreccom_face_body_embeddings_96d_yolox_fb/
+  additional_info_extractor: 1
 
 callbacks:
   model_checkpoint:

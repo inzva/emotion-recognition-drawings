@@ -26,7 +26,7 @@ model:
   model_alias: google/vit-base-patch16-224-in21k
   num_classes: 8
   # n_train_steps = int(len(train_dataset) / config.batch_size * num_epoch)
-  num_train_steps: 63900 # 5112 / 8 * 100
+  num_train_steps: 7987 # 5112 / 64 * 100
   lr: 0.00003
   weight_decay: 0.0005
   use_scheduler: True
@@ -37,12 +37,12 @@ model:
 datamodule:
   data_dir: /userfiles/comics_grp/datasets/EmoRecCom/
   modality: 2
-  batch_size: 8
+  batch_size: 64
   train_val_test_split: [ 5112, 500, 500 ]
   num_workers: 0
   pin_memory: False
   use_label_transform: False
-  # 0 for no augmentation, 1 for slight, 2 for medium and 3 for full, 0 for old/legacy
+  # 0 for no augmentation, 1 for slight, 2 for medium and 3 for full, 4 for old/legacy
   # check datamodule > transform_datamodule.py for details
   image_augment_strength: 2
 
