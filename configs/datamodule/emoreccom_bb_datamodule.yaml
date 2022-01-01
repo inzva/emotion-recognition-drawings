@@ -10,3 +10,4 @@ pin_memory: False
 use_tokenizer_instead_text_preprocessor: False
 tokenizer_name: null
 tokenizer_max_len: null
+bb_path: "/Users/caghankoksal/Documents/emotion-recognition-drawings/selected_bbox.json"
