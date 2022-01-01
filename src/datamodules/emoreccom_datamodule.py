@@ -46,7 +46,8 @@ class EmoRecComDataModule(LightningDataModule):
             #  creates new data for batches
             additional_info_extractor: Optional[int] = None,
             face_body_embedding_base_path: Optional[str] = None,
-            face_body_embedding_max_seq_len: Optional[int] = None
+            face_body_embedding_max_seq_len: Optional[int] = None,
+            use_clip = False
     ):
         super().__init__()
         assert image_augment_strength in [0, 1, 2, 3, 4]
@@ -106,6 +107,8 @@ class EmoRecComDataModule(LightningDataModule):
         self.text_transform = None
         self.label_transform = None
 
+        self.use_clip = use_clip
+
     @property
     def num_classes(self) -> int:
         return 8
@@ -130,6 +133,10 @@ class EmoRecComDataModule(LightningDataModule):
                                      max_sentence_length=self.tokenizer_max_len)
             self.text_transform = lambda texts: text_transform_for_elmo_embeddings_to_character_indexes(tokenizer_func,
                                                                                                         texts)
+        elif self.use_clip:
+            self.text_transform=None
+            dataset = EmoRecComDataset(self.data_dir, train=True, plain_text=self.use_clip, text_transform=self.text_transform)
+                
         else:
             dataset = EmoRecComDataset(self.data_dir, train=True)
             text_preprocessor = TextPreprocessor(dataset,
@@ -164,7 +171,8 @@ class EmoRecComDataModule(LightningDataModule):
                               vision_transform=self.vision_transform,
                               label_transform=self.label_transform,
                               damp_labels_if_text_is_empty=self.damp_labels_if_text_is_empty,
-                              additional_info_extractor=self.additional_info_extractor)
+                              additional_info_extractor=self.additional_info_extractor,
+                              plain_text=self.use_clip)
             self.data_train = dataset(specific_slice=slice(0, self.train_val_test_split[0]))
             self.data_val = dataset(specific_slice=slice(self.train_val_test_split[0],
                                                          self.train_val_test_split[0] + self.train_val_test_split[1]))

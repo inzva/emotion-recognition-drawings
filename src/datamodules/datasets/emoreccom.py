@@ -4,7 +4,7 @@ import json
 import numpy as np
 from torch.utils.data import Dataset
 from src.datamodules.datasets.dataset_modality import DatasetModality
-
+from src.utils.text.text_utils import merge_comic_texts
 
 class EmoRecComDataset(Dataset):
     def __init__(
@@ -17,7 +17,8 @@ class EmoRecComDataset(Dataset):
             label_transform=None,
             specific_slice=None,
             damp_labels_if_text_is_empty: bool = False,
-            additional_info_extractor=None
+            additional_info_extractor=None,
+            plain_text = False
     ):
         """EmoRecCom pytorch dataset
         @param data_dir: Directory of the dataset.
@@ -66,6 +67,8 @@ class EmoRecComDataset(Dataset):
         if specific_slice is not None:
             self.files = self.files[specific_slice]
 
+        self.plain_text = plain_text
+
     def __len__(self):
         return len(self.files)
 
@@ -101,6 +104,9 @@ class EmoRecComDataset(Dataset):
             labels = self.label_transform(labels)
         if self.additional_info_extractor:
             return img, img_info, labels, texts, self.additional_info_extractor(self.files[index], self.train)
+        if self.plain_text == True:
+            texts = merge_comic_texts(texts=texts)
+            return img, img_info, labels, texts
         return img, img_info, labels, texts
 
     def load_anno(self, index):
