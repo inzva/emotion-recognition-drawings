@@ -17,7 +17,8 @@ class EmoRecComBBDataset(Dataset):
             text_transform=None,
             vision_transform=None,
             specific_slice=None,
-            person_bb = True
+            bb_path= "",
+            person_bb=True,
     ):
         if isinstance(modality, int):
             modality = DatasetModality(modality)
@@ -59,7 +60,7 @@ class EmoRecComBBDataset(Dataset):
         self.person_bb = person_bb
         if self.person_bb:
             self.bbx_anns =  json.load(
-                open('/home/ckoksal20/Documents/emotion-recognition-drawings/selected_bbox.json',
+                open(bb_path,
                 'r'))
         
 

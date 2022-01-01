@@ -25,7 +25,9 @@ class EmoRecComBBDataModule(LightningDataModule):
             text_encoding_max_length: int = 120,
             batch_size: int = 64,
             num_workers: int = 0,
-            pin_memory: bool = False
+            pin_memory: bool = False,
+            bb_path: str = "selected_bbox.json",
+            person_bb: bool =True
     ):
         super().__init__()
         self.use_tokenizer_instead_text_preprocessor = use_tokenizer_instead_text_preprocessor
@@ -46,6 +48,8 @@ class EmoRecComBBDataModule(LightningDataModule):
         self.data_val: Optional[Dataset] = None
         self.data_test: Optional[Dataset] = None
         self.text_transform = None
+        self.bb_path = bb_path
+        self.person_bb = person_bb
 
 
     @property
@@ -74,7 +78,7 @@ class EmoRecComBBDataModule(LightningDataModule):
                                      )
             self.text_transform = lambda texts: text_transform_for_tokenizer(tokenizer_func, texts)
         else:
-            dataset = EmoRecComBBDataset(self.data_dir, train=True)
+            dataset = EmoRecComBBDataset(self.data_dir, train=True, bb_path=self.bb_path, person_bb=self.person_bb )
             text_preprocessor = TextPreprocessor(dataset,
                                                  encoding_max_length=self.text_encoding_max_length)
             text_preprocessor.create_vocabulary()
