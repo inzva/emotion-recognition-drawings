@@ -4,8 +4,15 @@
 Multi-modal Emotion Recognition on Drawings Project - inzva AI Projects #7
 
 # Clip Module Requirements
-$ pip install ftfy regex tqdm
-$ pip install git+https://github.com/openai/CLIP.git
+Need packages to 
+
+
+```
+pip install ftfy regex tqdm 
+pip install git+https://github.com/openai/CLIP.git
+python run.py experiment=clip_emoreccom.yaml
+```
+
 # Emotic Dataset 
 # Usage 
 
